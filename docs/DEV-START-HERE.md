@@ -1,6 +1,6 @@
 # Đọc cái này trước — dành cho đội phát triển
 
-Bộ tài liệu được đánh số từ `00` đến `08`, cộng `CODEBASE.md`. **Đừng đọc hết ngay.** File này chỉ ra cần đọc gì, lúc nào.
+Bộ tài liệu lịch sử MVP được đánh số từ `00` đến `08`, cộng `CODEBASE.md`. Đợt mở rộng doanh nghiệp được cập nhật tại [10-ENTERPRISE-DELIVERY.md](10-ENTERPRISE-DELIVERY.md) và [11-PREDEPLOY-LEGAL-REVIEW.md](11-PREDEPLOY-LEGAL-REVIEW.md); đọc trạng thái mới trước khi dùng phạm vi cũ để đánh giá sản phẩm.
 
 Thời gian đọc ngày đầu: **khoảng 40 phút.** Phần còn lại đọc theo sprint.
 
@@ -32,7 +32,7 @@ Không cần tra lại trong tài liệu, dùng bảng này:
 | Q3 | Dòng tiền hàng | Không escrow tiền hàng. Mỗi checkout chỉ một seller; production chỉ dùng phương án dòng tiền được Legal/PSP phê duyệt |
 | Q4 | Nguồn bản kê | `SPREADSHEET` và `PLATFORM_API` là hai kênh nhập ngang hàng, cùng trả `ReturnManifestDraft`; bản đầu chỉ bật CSV/XLSX |
 | Q5 | Hàng cấm | Xem `06-DANH-MUC-HANG-CAM.md` |
-| Q6 | Thanh toán | **Chưa chốt vendor.** PayOS chỉ là ứng viên; production bị chặn tới khi Legal/PSP xác nhận bằng văn bản |
+| Q6 | Thanh toán | Chủ dự án chọn **payOS + KienlongBank**. Adapter hiện chỉ nạp ngân sách quảng bá; tiền hàng/ký quỹ/refund/payout còn thiếu hợp đồng và triển khai. Xem tài liệu 10–11 |
 | Q7 | Ngưỡng hư hỏng | **30%** |
 | Q8 | Video | Tối đa **90 giây**; policy target hiện tại tính từ `case.final_closed_at` là **90 ngày** cho original và **3 năm** cho derivative/biên bản; phải snapshot version Legal duyệt, Object Lock/legal hold có thể kéo dài |
 | Q9 | Supabase | PostgreSQL + Auth; NestJS sở hữu mutation nghiệp vụ; Realtime chỉ báo refetch; evidence không dùng Supabase Storage |

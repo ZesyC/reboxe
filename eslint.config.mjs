@@ -2,7 +2,7 @@ import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["**/dist/**", "**/.next/**", "**/coverage/**", "**/src/generated.ts", "supabase/.temp/**"] },
+  { ignores: ["**/dist/**", "**/.next/**", "**/coverage/**", "**/src/generated.ts", "supabase/.temp/**", ".venv-ai/**", ".cache-ai/**", ".local-test/**"] },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   {

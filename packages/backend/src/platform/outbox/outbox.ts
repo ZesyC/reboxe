@@ -39,14 +39,27 @@ export class OutboxModule {
           );
           continue;
         }
-        await this.createInAppNotifications(client, event);
-        await client.query(
+        await client.query("SAVEPOINT outbox_event");
+        try {
+          await this.createInAppNotifications(client, event);
+          await client.query(
           `UPDATE outbox_events
            SET status = 'PROCESSED', attempts = attempts + 1,
                claimed_at = now(), processed_at = now(), last_error = NULL
            WHERE id = $1 AND status = 'PENDING'`,
           [event.id]
-        );
+          );
+          await client.query("RELEASE SAVEPOINT outbox_event");
+        } catch (error) {
+          await client.query("ROLLBACK TO SAVEPOINT outbox_event");
+          await client.query("RELEASE SAVEPOINT outbox_event");
+          const code = (error as { code?: string }).code;
+          await client.query(`UPDATE outbox_events SET attempts=attempts+1,
+            status=CASE WHEN attempts+1>=8 THEN 'DEAD' ELSE 'PENDING' END,
+            available_at=now()+least(3600,power(2,least(attempts+1,12))) * interval '1 second',
+            claimed_at=now(),last_error=$2 WHERE id=$1`,
+          [event.id, code && /^[A-Z0-9_]{1,40}$/.test(code) ? code : "EVENT_PROCESSING_FAILED"]);
+        }
       }
 
       await client.query("COMMIT");

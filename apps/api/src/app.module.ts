@@ -1,4 +1,9 @@
 import { AdminKycController } from "./http/controllers/admin-kyc.controller";
+import { MarketplaceController } from "./http/controllers/marketplace.controller";
+import { ClaimsAiController } from "./http/controllers/claims-ai.controller";
+import { EvidenceController } from "./http/controllers/evidence.controller";
+import { PayosController } from "./http/controllers/payos.controller";
+import { GhnController } from "./http/controllers/ghn.controller";
 import { KycReviewerGuard } from "./http/guards/kyc-reviewer.guard";
 import { Inject, Module, type OnApplicationShutdown } from "@nestjs/common";
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
@@ -20,7 +25,7 @@ import { RequestContextInterceptor } from "./http/interceptors/request-context.i
 import { RateLimitGuard } from "./http/guards/rate-limit.guard";
 
 @Module({
-  controllers: [AccountController, AdminKycController, ClaimsController, CommerceController, FinanceController, FulfillmentController, HealthController, IdentityController, KycController, ListingsController, OperationsController],
+  controllers: [GhnController, PayosController, EvidenceController, ClaimsAiController, MarketplaceController, AccountController, AdminKycController, ClaimsController, CommerceController, FinanceController, FulfillmentController, HealthController, IdentityController, KycController, ListingsController, OperationsController],
   providers: [
     ...backendProviders,
     KycReviewerGuard,

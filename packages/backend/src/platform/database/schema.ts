@@ -8,6 +8,7 @@ import {
   index,
   integer,
   jsonb,
+  numeric,
   pgTable,
   primaryKey,
   text,
@@ -515,6 +516,7 @@ export const disputeEvidences = pgTable("dispute_evidences", {
   id: text("id").primaryKey(), caseId: text("case_id").notNull().references(() => disputeCases.id), uploaderId: uuid("uploader_id").notNull().references(() => profiles.id),
   processingRecordId: text("processing_record_id").notNull().references(() => processingRecords.id), provider: text("provider").notNull().default("FAKE_METADATA"),
   objectKey: text("object_key").notNull(), objectVersion: text("object_version").notNull(), checksum: text("checksum").notNull(), originalOwner: text("original_owner").notNull(),
+  storageBucket: text("storage_bucket"), storageRegion: text("storage_region"), mimeType: text("mime_type"), durationSeconds: numeric("duration_seconds"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
 });
 
@@ -565,7 +567,82 @@ export const privacyRequests = pgTable("privacy_requests", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
 });
 
+export const aiTriageReports = pgTable("ai_triage_reports", {
+  id: uuid("id").primaryKey(), caseId: text("case_id").notNull().references(() => disputeCases.id),
+  evidenceId: text("evidence_id").notNull().references(() => disputeEvidences.id),
+  evidenceVersion: text("evidence_version").notNull(), evidenceChecksum: text("evidence_checksum").notNull(),
+  requestedBy: uuid("requested_by").notNull().references(() => profiles.id), modelId: text("model_id").notNull(),
+  modelRevision: text("model_revision").notNull(), promptVersion: text("prompt_version").notNull(),
+  report: jsonb("report").notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+}, (table) => [unique("ai_triage_reports_evidence_identity_key").on(table.evidenceId, table.evidenceVersion,
+  table.evidenceChecksum, table.modelId, table.modelRevision, table.promptVersion),
+  check("ai_triage_reports_check", sql`${table.report}->>'recommendation'='ADMIN_REVIEW' AND ${table.report}->>'financialAction'='NONE'`)]);
+
+export const evidenceUploads = pgTable("evidence_uploads", {
+  id: uuid("id").primaryKey(), evidenceId: text("evidence_id").notNull().unique(),
+  caseId: text("case_id").notNull().references(() => disputeCases.id), actorId: uuid("actor_id").notNull().references(() => profiles.id),
+  actorRole: text("actor_role").notNull(), processingRecordId: text("processing_record_id").notNull().references(() => processingRecords.id),
+  bucket: text("bucket").notNull(), region: text("region").notNull(), objectKey: text("object_key").notNull().unique(),
+  mimeType: text("mime_type").notNull(), sizeBytes: bigint("size_bytes", { mode: "number" }).notNull(), checksum: text("checksum").notNull(),
+  retainUntil: timestamp("retain_until", { withTimezone: true }).notNull(), expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  status: text("status").notNull().default("UPLOADING"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+}, (table) => [check("evidence_uploads_actor_role_check", sql`${table.actorRole} IN ('BUYER','SELLER')`),
+  check("evidence_uploads_size_bytes_check", sql`${table.sizeBytes}>0 AND ${table.sizeBytes}<=20971520`),
+  check("evidence_uploads_status_check", sql`${table.status} IN ('UPLOADING','READY')`)]);
+
+export const promotionCreditTopups = pgTable("promotion_credit_topups", {
+  id: uuid("id").primaryKey(), actorId: uuid("actor_id").notNull().references(() => profiles.id),
+  shopId: text("shop_id").notNull().references(() => shops.id), idempotencyKey: uuid("idempotency_key").notNull(),
+  merchantClientId: text("merchant_client_id").notNull(),
+  orderCode: bigint("order_code", { mode: "number" }).notNull().unique().default(sql`nextval('payos_promotion_order_code_seq')`),
+  amountVnd: bigint("amount_vnd", { mode: "number" }).notNull(), paymentLinkId: text("payment_link_id").unique(), checkoutUrl: text("checkout_url"),
+  status: text("status").notNull().default("CREATING"), expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), paidAt: timestamp("paid_at", { withTimezone: true })
+}, (table) => [unique("promotion_credit_topups_actor_id_idempotency_key_key").on(table.actorId, table.idempotencyKey),
+  check("promotion_credit_topups_amount_vnd_check", sql`${table.amountVnd} BETWEEN 10000 AND 10000000`),
+  check("promotion_credit_topups_status_check", sql`${table.status} IN ('CREATING','UNKNOWN','PENDING','PAID','CANCELLED','EXPIRED','BLOCKED')`)]);
+
+export const payosReceipts = pgTable("payos_receipts", {
+  reference: text("reference").primaryKey(), topupId: uuid("topup_id").notNull().references(() => promotionCreditTopups.id),
+  payloadHash: text("payload_hash").notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+});
+
 export type OutboxPayload = Record<string, unknown>;
+
+export const marketplaceAuthorizations = pgTable("marketplace_authorizations", {
+  id: uuid("id").primaryKey(), shopId: text("shop_id").notNull().references(() => shops.id),
+  actorId: uuid("actor_id").notNull().references(() => profiles.id), platform: text("platform").notNull(),
+  stateHash: text("state_hash").notNull().unique(), noticeVersion: text("notice_version").notNull(),
+  status: text("status").notNull().default("PENDING"), grantsEnc: bytea("grants_enc"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  completedAt: timestamp("completed_at", { withTimezone: true })
+}, (table) => [index("marketplace_authorizations_expiry").on(table.expiresAt),
+  check("marketplace_authorizations_platform_check", sql`${table.platform} IN ('SHOPEE','TIKTOK')`),
+  check("marketplace_authorizations_status_check", sql`${table.status} IN ('PENDING','EXCHANGING','SELECT_SHOP','COMPLETED','FAILED')`)]);
+
+export const marketplaceConnections = pgTable("marketplace_connections", {
+  id: uuid("id").primaryKey(), shopId: text("shop_id").notNull().references(() => shops.id),
+  platform: text("platform").notNull(), externalShopId: text("external_shop_id").notNull(), shopName: text("shop_name").notNull(),
+  credentialsEnc: bytea("credentials_enc"), status: text("status").notNull(),
+  consentActorId: uuid("consent_actor_id").notNull().references(() => profiles.id), noticeVersion: text("notice_version").notNull(),
+  tokenExpiresAt: timestamp("token_expires_at", { withTimezone: true }).notNull(),
+  refreshExpiresAt: timestamp("refresh_expires_at", { withTimezone: true }).notNull(),
+  connectedAt: timestamp("connected_at", { withTimezone: true }).notNull().defaultNow(),
+  disconnectedAt: timestamp("disconnected_at", { withTimezone: true }),
+  lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+  refreshRetryAt: timestamp("refresh_retry_at", { withTimezone: true }).notNull().defaultNow()
+}, (table) => [unique("marketplace_connections_shop_id_platform_key").on(table.shopId, table.platform),
+  unique("marketplace_connections_platform_external_shop_id_key").on(table.platform, table.externalShopId),
+  check("marketplace_connections_platform_check", sql`${table.platform} IN ('SHOPEE','TIKTOK')`),
+  check("marketplace_connections_status_check", sql`${table.status} IN ('CONNECTED','REAUTH_REQUIRED','DISCONNECTED')`),
+  check("marketplace_connections_check", sql`(${table.status} = 'DISCONNECTED') = (${table.credentialsEnc} IS NULL)`)]);
+
+export const marketplaceConnectionEvents = pgTable("marketplace_connection_events", {
+  id: uuid("id").primaryKey(), shopId: text("shop_id").notNull().references(() => shops.id), platform: text("platform").notNull(),
+  actorId: uuid("actor_id").notNull().references(() => profiles.id), event: text("event").notNull(), noticeVersion: text("notice_version").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+}, (table) => [check("marketplace_connection_events_event_check", sql`${table.event} IN ('CONSENT','CONNECTED','DISCONNECTED','REAUTH_REQUIRED')`)]);
 
 export const outboxEvents = pgTable(
   "outbox_events",

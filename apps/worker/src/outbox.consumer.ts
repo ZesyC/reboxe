@@ -3,16 +3,23 @@ import type { OutboxModule } from "@reboxe/backend";
 import { OUTBOX } from "./worker.providers";
 import { COMMERCE } from "./worker.providers";
 import type { CommerceModule } from "@reboxe/backend";
+import type { MarketplaceModule } from "@reboxe/backend";
+import { MARKETPLACE } from "./worker.providers";
+import { PAYOS_TOPUPS } from "./worker.providers";
+import type { PayosPromotionTopups } from "@reboxe/backend";
 
 @Injectable()
 export class OutboxConsumer implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(OutboxConsumer.name);
   private stopped = false;
   private timer?: NodeJS.Timeout;
+  private lastMarketplaceMaintenance = 0;
 
   constructor(
     @Inject(OUTBOX) private readonly outbox: OutboxModule,
-    @Inject(COMMERCE) private readonly commerce: CommerceModule
+    @Inject(COMMERCE) private readonly commerce: CommerceModule,
+    @Inject(MARKETPLACE) private readonly marketplace: MarketplaceModule,
+    @Inject(PAYOS_TOPUPS) private readonly topups: PayosPromotionTopups
   ) {}
 
   onModuleInit(): void {
@@ -33,6 +40,11 @@ export class OutboxConsumer implements OnModuleInit, OnModuleDestroy {
     try {
       const processed = await this.outbox.processBatch();
       const expired = await this.commerce.expireReservations();
+      if (Date.now() - this.lastMarketplaceMaintenance > 60_000) {
+        await this.marketplace.maintainConnections();
+        await this.topups.reconcileOutstanding();
+        this.lastMarketplaceMaintenance = Date.now();
+      }
       if (processed > 0 || expired > 0) {
         this.logger.log({ event: "outbox.batch.processed", processed, expired });
       }

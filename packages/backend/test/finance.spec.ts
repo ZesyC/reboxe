@@ -16,6 +16,7 @@ describe("seller finance snapshot", () => {
     } as const;
     const client = {
       query: vi.fn(async (sql: string) => {
+        if (sql.startsWith("BEGIN") || sql === "COMMIT" || sql === "ROLLBACK") return { rows: [] };
         if (!sql.includes("seller_finance_snapshots")) throw new Error(`Unexpected query: ${sql}`);
         return { rows: [{
           available_balance_vnd: String(snapshot.availableBalanceVnd),
@@ -32,7 +33,7 @@ describe("seller finance snapshot", () => {
     const pool = { connect: vi.fn(async () => client) } as unknown as Pool;
     const identity = { requireShopCapability: vi.fn(async () => undefined) } as unknown as IdentityModule;
 
-    await expect(new FinanceModule(pool, identity).getSnapshot("seller-id", "demo-shop")).resolves.toEqual(snapshot);
+    await expect(new FinanceModule(pool, identity, true).getSnapshot("seller-id", "demo-shop")).resolves.toEqual(snapshot);
     expect(identity.requireShopCapability).toHaveBeenCalledWith(client, "seller-id", "demo-shop", "VIEW_FINANCE");
     expect(client.release).toHaveBeenCalledOnce();
   });

@@ -5,6 +5,7 @@ export const checkoutInitSchema = z.object({
   addressId: z.string().min(1)
 }).strict();
 export type CheckoutInitInput = z.infer<typeof checkoutInitSchema>;
+export type CheckoutQuote = { subtotalVnd: number; shippingVnd: number; totalVnd: number; mode: "SANDBOX" };
 
 export const sandboxPaySchema = z.object({ method: z.literal("SANDBOX_COD") }).strict();
 export type SandboxPayInput = z.infer<typeof sandboxPaySchema>;

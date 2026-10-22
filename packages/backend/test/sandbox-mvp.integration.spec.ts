@@ -6,6 +6,7 @@ import { ClaimsModule } from "../src/modules/claims";
 import { CommerceModule } from "../src/modules/commerce";
 import { FakeCarrierAdapter, FulfillmentModule } from "../src/modules/fulfillment";
 import { IdentityModule } from "../src/modules/identity";
+import { FinanceModule } from "../src/modules/finance/finance";
 import { InventoryModule, type CatalogImageObject, type CatalogImageUploadIntent, type CatalogMediaStorage } from "../src/modules/inventory";
 
 const databaseUrl = process.env.DATABASE_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
@@ -195,6 +196,8 @@ describe("synthetic marketplace critical journey", () => {
   it("keeps posted ledger immutable and confirmed orders immune to expiry", async () => {
     const transaction = (await pool.query<{ id: string }>("SELECT id FROM ledger_transactions WHERE reference_id=$1 AND status='POSTED' LIMIT 1", [created.orderId])).rows[0]!;
     await expect(pool.query("UPDATE ledger_transactions SET reference_id='tampered' WHERE id=$1", [transaction.id])).rejects.toThrow(/POSTED_LEDGER_IMMUTABLE/);
+    await expect(pool.query("INSERT INTO ledger_postings(id,transaction_id,account_key,amount_vnd) VALUES($1,$2,'tampered',1)", [randomUUID(), transaction.id]))
+      .rejects.toThrow(/POSTED_LEDGER_IMMUTABLE/);
     await pool.query("UPDATE orders SET expires_at=now()-interval '1 minute' WHERE id=$1", [created.orderId]);
     expect(await commerce.expireReservations()).toBe(0);
     expect((await pool.query<{ status: string }>("SELECT status FROM fund_holds WHERE order_id=$1", [created.orderId])).rows[0]!.status).toBe("CAPTURED_SIMULATED");
@@ -212,6 +215,15 @@ describe("synthetic marketplace critical journey", () => {
     const adapter = new FakeCarrierAdapter();
     expect(await adapter.createOrder("same-order")).toEqual(await adapter.createOrder("same-order"));
     await expect(new FakeCarrierAdapter(true).quote("failure")).rejects.toThrow("FAKE_CARRIER_INJECTED_FAILURE");
+  });
+
+  it("builds finance from posted ledger and completed orders instead of the stale demo snapshot", async () => {
+    const report = await new FinanceModule(pool, identity).getSnapshot(sellerId, shopId);
+    const ledger = (await pool.query(`SELECT coalesce(sum(p.amount_vnd),0)::text AS amount FROM ledger_postings p
+      JOIN ledger_transactions t ON t.id=p.transaction_id WHERE t.status='POSTED' AND p.account_key=$1`, [`shop:${shopId}:available`])).rows[0];
+    expect(report.availableBalanceVnd).toBe(Number(ledger.amount));
+    expect(report.unpricedOrderCount).toBeGreaterThanOrEqual(1);
+    expect(report.productRevenue).toEqual(expect.arrayContaining([expect.objectContaining({ label: "Sản phẩm synthetic" })]));
   });
 
   it("completes 20 synthetic release-candidate orders with balanced ledgers", async () => {

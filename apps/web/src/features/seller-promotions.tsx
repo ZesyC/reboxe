@@ -15,16 +15,19 @@ export function SellerPromotions() {
   const [action, setAction] = useState<string>();
   const [message, setMessage] = useState<string>();
   const [error, setError] = useState<string>();
+  const [paymentOptions, setPaymentOptions] = useState({ payosPromotionPayments: false, sandboxPromotions: false });
 
   useEffect(() => {
     void api.getMe().then(async (nextActor) => {
       setActor(nextActor);
       const shop = nextActor.shops[0];
       if (!shop) return;
-      const [nextListings, nextOverview] = await Promise.all([
+      const [nextListings, nextOverview, options] = await Promise.all([
         api.listShopListings(shop.id),
-        api.getPromotionOverview(shop.id)
+        api.getPromotionOverview(shop.id),
+        api.getPaymentOptions()
       ]);
+      setPaymentOptions(options);
       setListings(nextListings.filter((listing) => listing.status === "ACTIVE"));
       setOverview(nextOverview);
     }).catch(() => setError("Không tải được dữ liệu quảng bá."));
@@ -36,9 +39,27 @@ export function SellerPromotions() {
     if (!shop) return;
     setAction("credit"); setError(undefined); setMessage(undefined);
     try {
-      setOverview(await api.seedPromotionCredit(shop.id, crypto.randomUUID()));
-      setMessage("Đã nạp 100.000đ vào số dư quảng bá.");
-    } catch { setError("Không thể nạp số dư quảng bá."); }
+      if (paymentOptions.payosPromotionPayments) {
+        const storageKey = `reboxe.promotion.topup.${shop.id}`;
+        let saved: { key: string; id?: string } | undefined;
+        try { saved = JSON.parse(sessionStorage.getItem(storageKey) ?? "null") ?? undefined; } catch { /* Reset malformed browser state. */ }
+        if (!saved?.key) saved = { key: crypto.randomUUID() };
+        sessionStorage.setItem(storageKey, JSON.stringify(saved));
+        const result = saved.id ? await api.getPromotionTopup(shop.id, saved.id) : await api.createPromotionTopup(shop.id, 100_000, saved.key);
+        sessionStorage.setItem(storageKey, JSON.stringify({ ...saved, id: result.id }));
+        if (result.status === "PAID") {
+          setOverview(await api.getPromotionOverview(shop.id)); sessionStorage.removeItem(storageKey);
+          setMessage("Đã ghi nhận thanh toán vào số dư quảng bá.");
+        } else if (result.checkoutUrl) window.location.assign(result.checkoutUrl);
+        else if (["CANCELLED", "EXPIRED"].includes(result.status)) {
+          sessionStorage.removeItem(storageKey); setMessage("Yêu cầu nạp đã kết thúc. Bạn có thể tạo yêu cầu mới.");
+        } else if (result.status === "BLOCKED") setError("Kênh nhận tiền chưa khớp cấu hình. Yêu cầu đã bị chặn; vui lòng liên hệ hỗ trợ để kiểm tra.");
+        else setMessage("Yêu cầu nạp đang được xác minh. Bấm lại để kiểm tra; không chuyển tiền thêm khi chưa rõ kết quả.");
+      } else if (paymentOptions.sandboxPromotions) {
+        setOverview(await api.seedPromotionCredit(shop.id, crypto.randomUUID()));
+        setMessage("Đã thêm 100.000đ mô phỏng. Không phát sinh giao dịch ngân hàng.");
+      }
+    } catch { setError("Chưa xác định được kết quả nạp. Vui lòng thử kiểm tra lại yêu cầu hiện tại."); }
     finally { setAction(undefined); }
   }
 
@@ -65,7 +86,7 @@ export function SellerPromotions() {
     <section className="min-h-[calc(100vh-100px)] rounded-xl border border-[var(--line)] bg-white p-5">
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--line)] pb-5">
         <div><h1 className="text-[22px] font-bold text-[var(--ink)]">Quảng Bá Sản Phẩm</h1><p className="mt-1 text-sm text-[var(--muted)]">Đưa sản phẩm vào hàng đầu của Gợi ý hôm nay trong 7 ngày.</p></div>
-        <div className="text-right"><p className="text-xs text-[var(--muted)]">Số dư quảng bá</p><strong className="text-xl text-[var(--accent)]">{overview.creditVnd.toLocaleString("vi-VN")}đ</strong><button className="ml-4 rounded-lg bg-[var(--accent)] px-4 py-2 text-xs font-bold text-white disabled:opacity-50" disabled={action === "credit"} onClick={() => void addCredit()} type="button">{action === "credit" ? "Đang nạp..." : "Nạp"}</button></div>
+        <div className="text-right"><p className="text-xs text-[var(--muted)]">Số dư quảng bá</p><strong className="text-xl text-[var(--accent)]">{overview.creditVnd.toLocaleString("vi-VN")}đ</strong><button className="ml-4 rounded-lg bg-[var(--accent)] px-4 py-2 text-xs font-bold text-white disabled:opacity-50" disabled={action === "credit" || (!paymentOptions.payosPromotionPayments && !paymentOptions.sandboxPromotions)} onClick={() => void addCredit()} type="button">{action === "credit" ? "Đang kiểm tra..." : paymentOptions.payosPromotionPayments ? "Nạp / kiểm tra 100.000đ" : paymentOptions.sandboxPromotions ? "Nạp mô phỏng 100.000đ" : "Chưa mở nạp"}</button></div>
       </div>
 
       {error ? <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800" role="alert">{error}</p> : null}

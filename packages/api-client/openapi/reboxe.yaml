@@ -5,6 +5,802 @@ info:
 servers:
   - url: http://127.0.0.1:3001
 paths:
+  /v1/admin/disputes/{caseId}/ai-reports/evidences:
+    parameters:
+      - name: caseId
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      operationId: listAiEvidence
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Evidence identities available to an authorized reviewer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [id, stored, mimeType]
+                  properties:
+                    id: { type: string }
+                    stored: { type: boolean }
+                    mimeType: { type: [string, 'null'] }
+  /v1/admin/disputes/{caseId}/ai-reports/{evidenceId}/stored:
+    parameters:
+      - { name: caseId, in: path, required: true, schema: { type: string } }
+      - { name: evidenceId, in: path, required: true, schema: { type: string } }
+    post:
+      operationId: analyzeStoredEvidence
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201':
+          description: Advisory reports; original evidence never returned to the browser
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [id, evidenceId, report, createdAt]
+                  properties:
+                    id: { type: string, format: uuid }
+                    evidenceId: { type: string }
+                    report: { $ref: '#/components/schemas/AiReport' }
+                    createdAt: { type: string, format: date-time }
+  /v1/shops/{shopId}/marketplaces:
+    parameters:
+    - $ref: '#/components/parameters/ShopId'
+    get:
+      operationId: listMarketplaceConnections
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - connections
+                - availability
+                properties:
+                  connections:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MarketplaceConnection'
+                  availability:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - platform
+                      - configured
+                      properties:
+                        platform:
+                          $ref: '#/components/schemas/Marketplace'
+                        configured:
+                          type: boolean
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/shops/{shopId}/marketplaces/authorize:
+    parameters:
+    - $ref: '#/components/parameters/ShopId'
+    post:
+      operationId: beginMarketplaceAuthorization
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectMarketplace'
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - authorizationUrl
+                properties:
+                  authorizationUrl:
+                    type: string
+                    format: uri
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/shops/{shopId}/marketplaces/complete:
+    parameters:
+    - $ref: '#/components/parameters/ShopId'
+    post:
+      operationId: completeMarketplaceAuthorization
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteMarketplaceAuthorization'
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - sessionId
+                - shops
+                properties:
+                  sessionId:
+                    type: string
+                    format: uuid
+                  shops:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - id
+                      - name
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/shops/{shopId}/marketplaces/confirm:
+    parameters:
+    - $ref: '#/components/parameters/ShopId'
+    post:
+      operationId: confirmMarketplaceShop
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmMarketplaceShop'
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MarketplaceConnection'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/shops/{shopId}/marketplaces/{platform}:
+    parameters:
+    - $ref: '#/components/parameters/ShopId'
+    - name: platform
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Marketplace'
+    delete:
+      operationId: disconnectMarketplace
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - disconnected
+                properties:
+                  disconnected:
+                    type: boolean
+                    const: true
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/checkout/quote:
+    post:
+      operationId: quoteCheckout
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckoutInit'
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckoutQuote'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/admin/disputes/{caseId}/ai-reports:
+    parameters:
+    - name: caseId
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      operationId: listAiReports
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - id
+                  - evidenceId
+                  - report
+                  - createdAt
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    evidenceId:
+                      type: string
+                    report:
+                      $ref: '#/components/schemas/AiReport'
+                    createdAt:
+                      type: string
+                      format: date-time
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/admin/disputes/{caseId}/ai-reports/{evidenceId}:
+    parameters:
+    - name: caseId
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: evidenceId
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      operationId: analyzeEvidence
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - id
+                  - evidenceId
+                  - report
+                  - createdAt
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    evidenceId:
+                      type: string
+                    report:
+                      $ref: '#/components/schemas/AiReport'
+                    createdAt:
+                      type: string
+                      format: date-time
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/disputes/{caseId}/evidence-uploads:
+    parameters:
+    - name: caseId
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      operationId: prepareEvidenceUpload
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceUpload'
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - id
+                - uploadUrl
+                - headers
+                - expiresAt
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  uploadUrl:
+                    type: string
+                    format: uri
+                  headers:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  expiresAt:
+                    type: string
+                    format: date-time
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/disputes/{caseId}/evidence-uploads/{uploadId}/complete:
+    parameters:
+    - name: caseId
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: uploadId
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      operationId: completeEvidenceUpload
+      security:
+      - bearerAuth: []
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - id
+                - status
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                    const: READY
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/payment-options:
+    get:
+      operationId: paymentOptions
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - payosPromotionPayments
+                - sandboxPromotions
+                properties:
+                  payosPromotionPayments:
+                    type: boolean
+                  sandboxPromotions:
+                    type: boolean
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/shops/{shopId}/promotion-topups:
+    parameters:
+    - $ref: '#/components/parameters/ShopId'
+    post:
+      operationId: createPromotionTopup
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromotionTopupInput'
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromotionTopup'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/shops/{shopId}/promotion-topups/{id}:
+    parameters:
+    - $ref: '#/components/parameters/ShopId'
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      operationId: getPromotionTopup
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromotionTopup'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/webhooks/payos/promotions:
+    post:
+      operationId: payosPromotionWebhook
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  received:
+                    type: boolean
+                  matched:
+                    type: boolean
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/shipping/ghn/provinces:
+    get:
+      operationId: ghnprovinces
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - id
+                  - name
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/shipping/ghn/districts:
+    parameters:
+    - in: query
+      name: provinceId
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    get:
+      operationId: ghndistricts
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - id
+                  - name
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/shipping/ghn/wards:
+    parameters:
+    - in: query
+      name: districtId
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    get:
+      operationId: ghnwards
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - id
+                  - name
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/shops/{shopId}/shipping/quote:
+    parameters:
+    - $ref: '#/components/parameters/ShopId'
+    post:
+      operationId: quoteShipping
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarrierQuoteInput'
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - carrier
+                - feeVnd
+                - estimated
+                - environment
+                - quotedAt
+                properties:
+                  carrier:
+                    type: string
+                    const: GHN
+                  feeVnd:
+                    type: integer
+                    minimum: 0
+                  estimated:
+                    type: boolean
+                    const: true
+                  environment:
+                    type: string
+                    enum:
+                    - STAGING
+                    - PRODUCTION
+                  quotedAt:
+                    type: string
+                    format: date-time
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /health/live:
     get:
       operationId: getLiveness
@@ -840,6 +1636,306 @@ components:
       required: true
       schema: { type: string }
   schemas:
+    Marketplace:
+      type: string
+      enum:
+      - SHOPEE
+      - TIKTOK
+    MarketplaceConnection:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - platform
+      - externalShopId
+      - shopName
+      - status
+      - connectedAt
+      - expiresAt
+      - lastSyncedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        platform:
+          $ref: '#/components/schemas/Marketplace'
+        externalShopId:
+          type: string
+        shopName:
+          type: string
+        status:
+          type: string
+          enum:
+          - CONNECTED
+          - REAUTH_REQUIRED
+          - DISCONNECTED
+        connectedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        lastSyncedAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+    ConnectMarketplace:
+      type: object
+      properties:
+        platform:
+          type: string
+          enum:
+          - SHOPEE
+          - TIKTOK
+        noticeVersion:
+          type: string
+          const: '2026-10-20'
+        consent:
+          type: boolean
+          const: true
+      required:
+      - platform
+      - noticeVersion
+      - consent
+      additionalProperties: false
+    CompleteMarketplaceAuthorization:
+      type: object
+      properties:
+        state:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        code:
+          type: string
+          minLength: 1
+          maxLength: 2048
+        externalShopId:
+          type: string
+          maxLength: 100
+      required:
+      - state
+      - code
+      additionalProperties: false
+    ConfirmMarketplaceShop:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        externalShopId:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+      - sessionId
+      - externalShopId
+      additionalProperties: false
+    AiReport:
+      type: object
+      properties:
+        schemaVersion:
+          type: string
+          const: triage-v1
+        modelId:
+          type: string
+          minLength: 1
+          maxLength: 200
+        modelRevision:
+          type: string
+          pattern: ^[a-f0-9]{40}$
+        promptVersion:
+          type: string
+          const: unboxing-v1
+        evidenceChecksum:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        durationSeconds:
+          type: number
+          minimum: 0
+          maximum: 90
+        sampledTimestamps:
+          minItems: 1
+          maxItems: 16
+          type: array
+          items:
+            type: number
+            minimum: 0
+            maximum: 90
+        visualAssessment:
+          type: object
+          properties:
+            assessment:
+              type: string
+              enum:
+              - VISIBLE_DAMAGE
+              - NO_CLEAR_DAMAGE
+              - INSUFFICIENT_EVIDENCE
+            observations:
+              maxItems: 16
+              type: array
+              items:
+                type: object
+                properties:
+                  timestamp_seconds:
+                    type: number
+                    minimum: 0
+                    maximum: 90
+                  description:
+                    type: string
+                    minLength: 1
+                    maxLength: 500
+                required:
+                - timestamp_seconds
+                - description
+                additionalProperties: false
+            limitations:
+              maxItems: 10
+              type: array
+              items:
+                type: string
+                maxLength: 500
+          required:
+          - assessment
+          - observations
+          - limitations
+          additionalProperties: false
+        recommendation:
+          type: string
+          const: ADMIN_REVIEW
+        financialAction:
+          type: string
+          const: NONE
+        calibrated:
+          type: boolean
+          const: false
+      required:
+      - schemaVersion
+      - modelId
+      - modelRevision
+      - promptVersion
+      - evidenceChecksum
+      - durationSeconds
+      - sampledTimestamps
+      - visualAssessment
+      - recommendation
+      - financialAction
+      - calibrated
+      additionalProperties: false
+    CheckoutQuote:
+      type: object
+      required:
+      - subtotalVnd
+      - shippingVnd
+      - totalVnd
+      - mode
+      properties:
+        subtotalVnd:
+          type: integer
+          minimum: 1
+        shippingVnd:
+          type: integer
+          minimum: 0
+        totalVnd:
+          type: integer
+          minimum: 1
+        mode:
+          type: string
+          const: SANDBOX
+    EvidenceUpload:
+      type: object
+      properties:
+        processingRecordId:
+          type: string
+          minLength: 1
+        mimeType:
+          type: string
+          enum:
+          - image/jpeg
+          - image/png
+          - image/webp
+          - video/mp4
+          - video/webm
+          - video/quicktime
+        sizeBytes:
+          type: integer
+          exclusiveMinimum: 0
+          maximum: 20971520
+        checksum:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+      required:
+      - processingRecordId
+      - mimeType
+      - sizeBytes
+      - checksum
+      additionalProperties: false
+    PromotionTopupInput:
+      type: object
+      properties:
+        amountVnd:
+          type: integer
+          minimum: 10000
+          maximum: 10000000
+        idempotencyKey:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+      required:
+      - amountVnd
+      - idempotencyKey
+      additionalProperties: false
+    CarrierQuoteInput:
+      type: object
+      properties:
+        listingId:
+          type: string
+          minLength: 1
+          maxLength: 200
+        districtId:
+          type: integer
+          exclusiveMinimum: 0
+          maximum: 9007199254740991
+        wardCode:
+          type: string
+          pattern: ^[a-zA-Z0-9-]{1,20}$
+      required:
+      - listingId
+      - districtId
+      - wardCode
+      additionalProperties: false
+    PromotionTopup:
+      type: object
+      required:
+      - id
+      - amountVnd
+      - status
+      - checkoutUrl
+      - expiresAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        amountVnd:
+          type: integer
+        status:
+          type: string
+          enum:
+          - CREATING
+          - UNKNOWN
+          - PENDING
+          - PAID
+          - CANCELLED
+          - EXPIRED
+          - BLOCKED
+        checkoutUrl:
+          type:
+          - string
+          - 'null'
+        expiresAt:
+          type: string
+          format: date-time
+
     Error:
       type: object
       additionalProperties: false

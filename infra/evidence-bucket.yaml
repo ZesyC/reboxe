@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Private REBOXE evidence bucket with immutable object versions. Review region and retention before provisioning.
+Parameters:
+  WebOrigin:
+    Type: String
+    Description: Exact HTTPS web origin allowed to upload evidence
+    AllowedPattern: 'https://[^/]+(\.[^/]+)?'
+Resources:
+  EvidenceBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      ObjectLockEnabled: true
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins: [!Ref WebOrigin]
+            AllowedMethods: [PUT]
+            AllowedHeaders: [content-type, x-amz-checksum-sha256, x-amz-object-lock-mode, x-amz-object-lock-retain-until-date, x-amz-sdk-checksum-algorithm]
+            ExposedHeaders: [ETag, x-amz-version-id]
+            MaxAge: 300
+  EvidenceBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref EvidenceBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: RequireTLS
+            Effect: Deny
+            Principal: '*'
+            Action: s3:*
+            Resource: [!GetAtt EvidenceBucket.Arn, !Sub '${EvidenceBucket.Arn}/*']
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+Outputs:
+  BucketName:
+    Value: !Ref EvidenceBucket
+  Region:
+    Value: !Ref AWS::Region

@@ -127,6 +127,35 @@
       "when": 1788937200000,
       "tag": "0017_listing_promotions",
       "breakpoints": true
-    }
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792429200000,
+      "tag": "0018_marketplace_connections",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792429201000,
+      "tag": "0019_ai_triage",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792429202000,
+      "tag": "0020_evidence_uploads",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792429203000,
+      "tag": "0021_payos_promotion_topups",
+      "breakpoints": true
+    },
+    { "idx": 22, "version": "7", "when": 1792429204000, "tag": "0022_payment_channel_block", "breakpoints": true }
   ]
 }

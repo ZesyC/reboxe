@@ -13,7 +13,7 @@ function MetricCards({ finance }: { finance: SellerFinanceSnapshot }) {
   const metrics = [
     { label: "SỐ DƯ KÝ QUỸ KHẢ DỤNG", value: finance.availableBalanceVnd },
     { label: "TẠM KHÓA ĐỐI SOÁT", value: finance.heldBalanceVnd },
-    { label: "TỔNG DOANH THU THỰC NHẬN", value: finance.netRevenueVnd }
+    { label: finance.unpricedOrderCount ? "GIÁ TRỊ ĐƠN HOÀN THÀNH" : "DOANH THU SAU ĐIỀU CHỈNH", value: finance.netRevenueVnd }
   ];
   return (
     <div className="grid shrink-0 gap-3 lg:grid-cols-3 xl:gap-3">
@@ -41,8 +41,8 @@ function RevenueTrend({ finance }: { finance: SellerFinanceSnapshot }) {
   return (
     <article className="h-[270px] shrink-0 overflow-x-auto rounded-xl ring-1 ring-inset ring-[var(--line)]">
       <div className="relative h-[268px] min-w-[1122px]">
-        <h2 className="absolute left-[19px] top-[17px] text-lg font-bold">Xu hướng doanh thu 6 tháng gần nhất</h2>
-        <p className="absolute left-[19px] top-[43px] text-xs text-[var(--muted)]">Doanh thu thực nhận theo tháng</p>
+        <h2 className="absolute left-[19px] top-[17px] text-lg font-bold">Xu hướng doanh thu theo tháng</h2>
+        <p className="absolute left-[19px] top-[43px] text-xs text-[var(--muted)]">Giá trị đơn hoàn thành sau các khoản điều chỉnh đã ghi nhận</p>
         {[81, 123.67, 166.33, 209].map((top) => <span className="absolute left-[71px] h-px w-[1012px] bg-[var(--line)]" key={top} style={{ top }} />)}
         {trend.map((item, index) => {
           const next = trend[index + 1];
@@ -60,7 +60,7 @@ function RevenueTrend({ finance }: { finance: SellerFinanceSnapshot }) {
 
 function RevenueByProduct({ finance }: { finance: SellerFinanceSnapshot }) {
   const maxRevenue = Math.max(1, ...finance.productRevenue.map((item) => item.amountVnd));
-  const products = finance.productRevenue.slice(0, 4).map((item) => ({ ...item, height: item.amountVnd / maxRevenue * 106.4 }));
+  const products = finance.productRevenue.slice(0, 4).map((item) => ({ ...item, height: Math.max(0, item.amountVnd / maxRevenue * 106.4) }));
   return (
     <article className="relative min-h-[280px] min-w-0 rounded-xl ring-1 ring-inset ring-[var(--line)]">
       <h2 className="absolute left-[19px] top-[17px] text-lg font-bold">Doanh thu theo sản phẩm</h2>
@@ -122,6 +122,7 @@ export default function SellerFinancePage() {
       <FinanceWorkspace active="overview">
         {error ? <div className="grid min-h-[420px] place-items-center text-sm text-red-600" role="alert">{error}</div> : !finance ? <div className="grid min-h-[420px] place-items-center text-sm text-[var(--muted)]">Đang tải dữ liệu tài chính...</div> : <>
         <MetricCards finance={finance} />
+        {finance.unpricedOrderCount ? <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900" role="status">Có {finance.unpricedOrderCount} đơn cũ chưa lưu hoa hồng tại thời điểm đặt hàng. Giá trị tổng hợp chưa phản ánh đủ hoa hồng của các đơn này và không phải xác nhận tiền đã về ngân hàng.</p> : null}
         <div className="flex min-h-0 flex-1 flex-col gap-3">
           <RevenueTrend finance={finance} />
           <div className="grid min-h-[280px] flex-1 grid-cols-1 gap-3 lg:grid-cols-2">

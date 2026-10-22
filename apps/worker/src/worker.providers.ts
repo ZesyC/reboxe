@@ -1,11 +1,23 @@
 import type { Provider } from "@nestjs/common";
-import { CommerceModule, createDatabase, OutboxModule, type DatabaseContext } from "@reboxe/backend";
+import { CommerceModule, createDatabase, createMarketplaceProviders, createPayosClient, MarketplaceModule, OutboxModule, PayosPromotionTopups, type DatabaseContext } from "@reboxe/backend";
 
 export const DATABASE = Symbol("DATABASE");
 export const OUTBOX = Symbol("OUTBOX");
 export const COMMERCE = Symbol("COMMERCE");
+export const MARKETPLACE = Symbol("MARKETPLACE");
+export const PAYOS_TOPUPS = Symbol("PAYOS_TOPUPS");
 
 export const workerProviders: Provider[] = [
+  { provide: PAYOS_TOPUPS, inject: [DATABASE], useFactory: (database: DatabaseContext) => new PayosPromotionTopups(database.pool,
+    createPayosClient(), process.env.WEB_ORIGIN ?? "http://localhost:3000", process.env.PAYOS_EXPECTED_ACCOUNT_NUMBER ?? "", process.env.PAYOS_EXPECTED_BANK_BIN ?? "") },
+  {
+    provide: MARKETPLACE, inject: [DATABASE],
+    useFactory: (database: DatabaseContext) => {
+      const secret = process.env.MARKETPLACE_TOKEN_ENCRYPTION_KEY ?? process.env.SELLER_PII_ENCRYPTION_KEY;
+      if (!secret && process.env.NODE_ENV === "production") throw new Error("Marketplace token encryption secret is required");
+      return new MarketplaceModule(database.pool, secret ?? "local-dev-only-marketplace-secret-change-before-production", createMarketplaceProviders());
+    }
+  },
   {
     provide: DATABASE,
     useFactory: (): DatabaseContext =>

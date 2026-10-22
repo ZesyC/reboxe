@@ -17,6 +17,11 @@ build/
 .next/
 .turbo/
 coverage/
+.venv-ai/
+.cache-ai/
+.local-test/
+__pycache__/
+*.pyc
 test-results/
 playwright-report/
 

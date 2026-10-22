@@ -4,6 +4,8 @@ import { SellerShell } from "../../../features/seller-shell";
 import { SellerWorkbench } from "../../../features/seller-workbench/seller-workbench";
 import { SellerDisputes, SellerOrders } from "../../../features/seller-operations";
 import { SellerPromotions } from "../../../features/seller-promotions";
+import { MarketplaceConnections } from "../../../features/marketplace-connections";
+import { ShippingQuote } from "../../../features/shipping-quote";
 
 const sections = {
   returns: "Khiếu nại / Hoàn trả",
@@ -12,6 +14,8 @@ const sections = {
 
 export default async function SellerSectionPage({ params }: { params: Promise<{ section: string }> }) {
   const { section } = await params;
+  if (section === "connections") return <SellerShell><MarketplaceConnections /></SellerShell>;
+  if (section === "shipping") return <SellerShell><ShippingQuote /></SellerShell>;
 
   if (section === "inventory") {
     return (

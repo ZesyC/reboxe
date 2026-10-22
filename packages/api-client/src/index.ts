@@ -36,7 +36,9 @@ import type {
   BatchCreatePackageListingsResult,
   SellerFinanceProjection,
   ListingPromotion,
-  PromotionOverview
+  PromotionOverview,
+  Marketplace, MarketplaceAvailability, MarketplaceConnection, MarketplaceShopChoice, CheckoutQuote,
+  AiReport, EvidenceUploadInput, EvidenceUploadIntent, PromotionTopup, CarrierLocation, CarrierQuote
 } from "@reboxe/shared";
 
 export type { paths } from "./generated";
@@ -85,6 +87,51 @@ export function createApiClient(options: ApiClientOptions) {
   }
 
   return {
+    getCarrierLocations: (kind: "provinces" | "districts" | "wards", parentId?: string) => request<CarrierLocation[]>(
+      `/v1/shipping/ghn/${kind}${parentId ? `?${kind === "districts" ? "provinceId" : "districtId"}=${encodeURIComponent(parentId)}` : ""}`),
+    quoteShipping: (shopId: string, listingId: string, districtId: number, wardCode: string) => request<CarrierQuote>(
+      `/v1/shops/${encodeURIComponent(shopId)}/shipping/quote`, { method: "POST", body: JSON.stringify({ listingId, districtId, wardCode }) }),
+    getPaymentOptions: () => request<{ payosPromotionPayments: boolean; sandboxPromotions: boolean }>("/v1/payment-options"),
+    createPromotionTopup: (shopId: string, amountVnd: number, idempotencyKey: string) => request<PromotionTopup>(
+      `/v1/shops/${encodeURIComponent(shopId)}/promotion-topups`, { method: "POST", body: JSON.stringify({ amountVnd, idempotencyKey }) }),
+    getPromotionTopup: (shopId: string, id: string) => request<PromotionTopup>(`/v1/shops/${encodeURIComponent(shopId)}/promotion-topups/${encodeURIComponent(id)}`, { cache: "no-store" }),
+    uploadEvidence: async (caseId: string, processingRecordId: string, file: File) => {
+      const checksum = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer())))
+        .map((value) => value.toString(16).padStart(2, "0")).join("");
+      const input = { processingRecordId, mimeType: file.type, sizeBytes: file.size, checksum } as EvidenceUploadInput;
+      const intent = await request<EvidenceUploadIntent>(`/v1/disputes/${encodeURIComponent(caseId)}/evidence-uploads`, { method: "POST", body: JSON.stringify(input) });
+      const response = await fetch(intent.uploadUrl, { method: "PUT", headers: intent.headers, body: file });
+      if (!response.ok) throw new ApiClientError(response.status, "VALIDATION_FAILED", "Không thể tải file vào kho bằng chứng.");
+      return { uploadId: intent.id };
+    },
+    completeEvidenceUpload: (caseId: string, uploadId: string) => request<{ id: string; status: "READY" }>(
+      `/v1/disputes/${encodeURIComponent(caseId)}/evidence-uploads/${encodeURIComponent(uploadId)}/complete`, { method: "POST" }),
+    listAiReports: (caseId: string) => request<Array<{ id: string; evidenceId: string; report: AiReport; createdAt: string }>>(
+      `/v1/admin/disputes/${encodeURIComponent(caseId)}/ai-reports`, { cache: "no-store" }),
+    listAiEvidence: (caseId: string) => request<Array<{ id: string; stored: boolean; mimeType: string | null }>>(
+      `/v1/admin/disputes/${encodeURIComponent(caseId)}/ai-reports/evidences`, { cache: "no-store" }),
+    analyzeStoredEvidence: (caseId: string, evidenceId: string) => request<Array<{ id: string; evidenceId: string; report: AiReport; createdAt: string }>>(
+      `/v1/admin/disputes/${encodeURIComponent(caseId)}/ai-reports/${encodeURIComponent(evidenceId)}/stored`, { method: "POST" }),
+    analyzeEvidence: (caseId: string, evidenceId: string, file: File) => {
+      const form = new FormData(); form.set("file", file);
+      return request<Array<{ id: string; evidenceId: string; report: AiReport; createdAt: string }>>(
+        `/v1/admin/disputes/${encodeURIComponent(caseId)}/ai-reports/${encodeURIComponent(evidenceId)}`, { method: "POST", body: form });
+    },
+    quoteCheckout: (input: CheckoutInitInput) => request<CheckoutQuote>("/v1/checkout/quote", { method: "POST", body: JSON.stringify(input) }),
+    listMarketplaceConnections: (shopId: string) => request<{ connections: MarketplaceConnection[]; availability: MarketplaceAvailability[] }>(
+      `/v1/shops/${encodeURIComponent(shopId)}/marketplaces`, { cache: "no-store" }),
+    beginMarketplaceAuthorization: (shopId: string, platform: Marketplace, noticeVersion: string) => request<{ authorizationUrl: string }>(
+      `/v1/shops/${encodeURIComponent(shopId)}/marketplaces/authorize`, {
+        method: "POST", body: JSON.stringify({ platform, consent: true, noticeVersion })
+      }),
+    completeMarketplaceAuthorization: (shopId: string, input: { state: string; code: string; externalShopId?: string }) =>
+      request<{ sessionId: string; shops: MarketplaceShopChoice[] }>(`/v1/shops/${encodeURIComponent(shopId)}/marketplaces/complete`, {
+        method: "POST", body: JSON.stringify(input)
+      }),
+    confirmMarketplaceShop: (shopId: string, sessionId: string, externalShopId: string) => request<MarketplaceConnection[]>(
+      `/v1/shops/${encodeURIComponent(shopId)}/marketplaces/confirm`, { method: "POST", body: JSON.stringify({ sessionId, externalShopId }) }),
+    disconnectMarketplace: (shopId: string, platform: Marketplace) => request<{ disconnected: true }>(
+      `/v1/shops/${encodeURIComponent(shopId)}/marketplaces/${platform}`, { method: "DELETE" }),
     listAccountAddresses: () => request<AccountAddress[]>("/v1/account/addresses", { cache: "no-store" }),
     createAccountAddress: (input: CreateAccountAddressInput) => request<AccountAddress>("/v1/account/addresses", {
       method: "POST", body: JSON.stringify(input)

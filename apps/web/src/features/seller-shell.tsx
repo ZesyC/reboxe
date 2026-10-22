@@ -29,12 +29,14 @@ export function SellerShell({ children }: { children: ReactNode }) {
             <SellerNavItem active={pathname === "/seller/inventory"} href="/seller/inventory">Quản Lý Kho Hàng</SellerNavItem>
             <SellerNavItem active={pathname === "/seller/promotions"} href="/seller/promotions">Quảng Bá Sản Phẩm</SellerNavItem>
             <SellerNavItem active={pathname === "/seller/orders"} href="/seller/orders">Quản Lý Đơn Hàng</SellerNavItem>
+            <SellerNavItem active={pathname === "/seller/shipping"} href="/seller/shipping">Phí vận chuyển</SellerNavItem>
             <SellerNavItem active={pathname === "/seller/kyc"} href="/seller/kyc">Trạng thái xác minh</SellerNavItem>
             <SellerNavItem active={pathname === "/seller/returns"} href="/seller/returns">Khiếu nại / Hoàn trả</SellerNavItem>
           </div>
           <p className="mb-1 mt-5 text-[11px] font-medium text-[var(--muted)]">TÀI CHÍNH</p>
           <SellerNavItem active={pathname === "/seller/finance" || pathname === "/seller/wallet"} href="/seller/finance">Đối Soát &amp; Ví Ký Quỹ</SellerNavItem>
           <p className="mb-1 mt-5 text-[11px] font-medium text-[var(--muted)]">DỮ LIỆU</p>
+          <SellerNavItem active={pathname === "/seller/connections"} href="/seller/connections">Kết nối nguồn hàng</SellerNavItem>
           <SellerNavItem active={pathname === "/seller/reports"} href="/seller/reports">Báo Cáo Hiệu Suất</SellerNavItem>
         </nav>
       </aside>

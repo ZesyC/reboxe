@@ -3,6 +3,13 @@ import {
   AccountModule,
   CommerceModule,
   ClaimsModule,
+  ClaimsAiModule,
+  EvidenceModule,
+  createS3EvidenceStorage,
+  PayosPromotionTopups,
+  createPayosClient,
+  GhnQuotes,
+  ghnShopMapping,
   FinanceModule,
   FakeCarrierAdapter,
   FulfillmentModule,
@@ -10,6 +17,8 @@ import {
   InventoryModule,
   KycModule,
   OperationsModule,
+  MarketplaceModule,
+  createMarketplaceProviders,
   createDatabase,
   type BusinessVerificationProvider,
   type CatalogMediaStorage,
@@ -21,6 +30,11 @@ import { createVnptKycProvider } from "./platform/kyc/vnpt-kyc-provider";
 import { SupabaseCatalogMediaStorage } from "./platform/storage/supabase-catalog-media-storage";
 
 export const DATABASE = Symbol("DATABASE");
+export const MARKETPLACE = Symbol("MARKETPLACE");
+export const CLAIMS_AI = Symbol("CLAIMS_AI");
+export const EVIDENCE = Symbol("EVIDENCE");
+export const PAYOS_TOPUPS = Symbol("PAYOS_TOPUPS");
+export const GHN_QUOTES = Symbol("GHN_QUOTES");
 export const ACCOUNT = Symbol("ACCOUNT");
 export const FINANCE = Symbol("FINANCE");
 export const IDENTITY = Symbol("IDENTITY");
@@ -51,6 +65,20 @@ function sellerPiiEncryptionSecret(): string {
 }
 
 export const backendProviders: Provider[] = [
+  { provide: GHN_QUOTES, inject: [DATABASE], useFactory: (database: DatabaseContext) => new GhnQuotes(database.pool,
+    process.env.GHN_TOKEN, ghnShopMapping(process.env.GHN_SHOP_MAPPING), process.env.GHN_ENVIRONMENT === "PRODUCTION") },
+  { provide: PAYOS_TOPUPS, inject: [DATABASE], useFactory: (database: DatabaseContext) => new PayosPromotionTopups(database.pool,
+    createPayosClient(), process.env.WEB_ORIGIN ?? "http://localhost:3000", process.env.PAYOS_EXPECTED_ACCOUNT_NUMBER ?? "", process.env.PAYOS_EXPECTED_BANK_BIN ?? "") },
+  { provide: EVIDENCE, inject: [DATABASE], useFactory: (database: DatabaseContext) =>
+    new EvidenceModule(database.pool, createS3EvidenceStorage(), process.env.AI_SERVICE_URL, process.env.AI_SERVICE_TOKEN) },
+  { provide: CLAIMS_AI, inject: [DATABASE], useFactory: (database: DatabaseContext) =>
+    new ClaimsAiModule(database.pool, process.env.AI_SERVICE_URL, process.env.AI_SERVICE_TOKEN, createS3EvidenceStorage()) },
+  {
+    provide: MARKETPLACE,
+    inject: [DATABASE],
+    useFactory: (database: DatabaseContext) => new MarketplaceModule(database.pool,
+      process.env.MARKETPLACE_TOKEN_ENCRYPTION_KEY ?? sellerPiiEncryptionSecret(), createMarketplaceProviders())
+  },
   {
     provide: DATABASE,
     useFactory: (): DatabaseContext =>
@@ -68,7 +96,7 @@ export const backendProviders: Provider[] = [
     provide: FINANCE,
     inject: [DATABASE, IDENTITY],
     useFactory: (database: DatabaseContext, identity: IdentityModule): FinanceModule =>
-      new FinanceModule(database.pool, identity)
+      new FinanceModule(database.pool, identity, process.env.NODE_ENV !== "production" && process.env.FINANCE_DEMO_SNAPSHOTS === "true")
   },
   {
     provide: COMMERCE,
@@ -78,7 +106,8 @@ export const backendProviders: Provider[] = [
       sellerPiiEncryptionSecret(),
       process.env.NODE_ENV !== "production"
         && (process.env.COMMERCE_MODE ?? "SANDBOX") === "SANDBOX"
-        && (process.env.PAYMENT_MODE ?? "DISABLED") === "DISABLED"
+        && (process.env.PAYMENT_MODE ?? "DISABLED") === "DISABLED",
+      process.env.PAYOS_PROMOTION_PAYMENTS_ENABLED === "true"
     )
   },
   {

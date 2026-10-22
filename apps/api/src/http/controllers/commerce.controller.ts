@@ -9,6 +9,13 @@ import type { Actor } from "../types/authenticated-request";
 export class CommerceController {
   constructor(@Inject(COMMERCE) private readonly commerce: CommerceModule) {}
 
+  @Post("checkout/quote")
+  quote(@CurrentActor() actor: Actor, @Body() body: unknown) {
+    const parsed = checkoutInitSchema.safeParse(body);
+    if (!parsed.success) throw new DomainError("VALIDATION_FAILED", 422, "Invalid checkout quote");
+    return this.commerce.quoteCheckout(actor.id, parsed.data);
+  }
+
   @Post("checkout/init")
   init(@CurrentActor() actor: Actor, @Body() body: unknown, @Headers("idempotency-key") key: string) {
     const parsed = checkoutInitSchema.safeParse(body);

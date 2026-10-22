@@ -1,4 +1,4 @@
-import type { CheckoutInitInput, CommerceOrder, ListingPromotion, PromotionOverview, SellerFinanceProjection } from "@reboxe/shared";
+import type { CheckoutInitInput, CheckoutQuote, CommerceOrder, ListingPromotion, PromotionOverview, SellerFinanceProjection } from "@reboxe/shared";
 import { createHash } from "node:crypto";
 import type { Pool, PoolClient } from "pg";
 import { ulid } from "ulid";
@@ -18,11 +18,12 @@ type PromotionRow = {
 
 const promotionFeeVnd = 20_000;
 const promotionDurationMs = 7 * 24 * 60 * 60_000;
+const sandboxShippingVnd = 30_000;
 
 export class CommerceModule {
   private readonly piiKey: Buffer;
 
-  constructor(private readonly pool: Pool, piiSecret: string, private readonly sandboxEnabled: boolean) {
+  constructor(private readonly pool: Pool, piiSecret: string, private readonly sandboxEnabled: boolean, private readonly promotionsEnabled = false) {
     this.piiKey = createPiiKey(piiSecret);
     if (process.env.NODE_ENV === "production" && sandboxEnabled) {
       throw new Error("Sandbox commerce must never be enabled in production");
@@ -81,7 +82,7 @@ export class CommerceModule {
   }
 
   async sponsorListing(actorId: string, shopId: string, listingId: string, idempotencyKey: string): Promise<ListingPromotion> {
-    this.requireSandbox();
+    if (!this.sandboxEnabled && !this.promotionsEnabled) throw new DomainError("PAYMENT_METHOD_DISABLED", 503, "Promotion purchases are disabled");
     const client = await this.pool.connect();
     try {
       await client.query("BEGIN");
@@ -128,6 +129,24 @@ export class CommerceModule {
     } finally { client.release(); }
   }
 
+  async quoteCheckout(actorId: string, input: CheckoutInitInput): Promise<CheckoutQuote> {
+    this.requireSandbox();
+    if (input.items.length !== 1) throw new DomainError("ONE_PACKAGE_PER_CHECKOUT", 422, "Checkout accepts exactly one package");
+    const result = await this.pool.query<{ price: string; shipping: string | null }>(`SELECT coalesce(prior.subtotal_vnd,l.price)::text AS price,prior.fee_vnd::text AS shipping FROM listings l
+      JOIN return_packages p ON p.id=l.return_package_id JOIN shops s ON s.id=l.shop_id
+      LEFT JOIN LATERAL (SELECT o.subtotal_vnd,o.fee_vnd FROM orders o JOIN sub_orders so ON so.order_id=o.id
+        JOIN sub_order_items i ON i.sub_order_id=so.id WHERE i.listing_id=l.id AND o.buyer_id=$3
+        AND (o.status='RESERVED' AND o.expires_at>now() OR o.status IN ('CONFIRMED','READY_TO_SHIP','PICKED_UP','IN_TRANSIT','DELIVERED','COMPLETED'))
+        ORDER BY o.created_at DESC LIMIT 1) prior ON true
+      WHERE l.id=$1 AND ((l.status='ACTIVE' AND p.inventory_status='AVAILABLE' AND s.status='ACTIVE') OR prior.subtotal_vnd IS NOT NULL)
+      AND EXISTS(SELECT 1 FROM account_addresses WHERE id=$2 AND user_id=$3)`,
+    [input.items[0]!.listingId, input.addressId, actorId]);
+    if (!result.rows[0]) throw new DomainError("ITEM_BEING_PURCHASED", 409, "Package or shipping address is unavailable");
+    const subtotalVnd = Number(result.rows[0].price);
+    const shippingVnd = result.rows[0].shipping === null ? sandboxShippingVnd : Number(result.rows[0].shipping);
+    return { subtotalVnd, shippingVnd, totalVnd: subtotalVnd + shippingVnd, mode: "SANDBOX" };
+  }
+
   async initCheckout(actorId: string, input: CheckoutInitInput, idempotencyKey: string): Promise<CommerceOrder> {
     this.requireSandbox();
     const requestHash = hash({ input });
@@ -172,7 +191,7 @@ export class CommerceModule {
       if (listing.status !== "ACTIVE" || listing.package_status !== "AVAILABLE") throw new DomainError("ITEM_BEING_PURCHASED", 409, "Package is being purchased");
 
       const subtotalVnd = Number(listing.price);
-      const feeVnd = 30_000;
+      const feeVnd = sandboxShippingVnd;
       const holdVnd = Math.ceil(subtotalVnd * 0.1);
       if (await this.accountBalance(client, `shop:${listing.shop_id}:available`) < holdVnd) {
         throw new DomainError("INSUFFICIENT_SHOP_FUNDS", 409, "Synthetic shop balance does not cover the hold");

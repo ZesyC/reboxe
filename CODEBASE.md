@@ -13,7 +13,7 @@ reboxe/
 │  ├─ worker/       # Outbox/job composition root
 │  ├─ web/          # Next.js buyer + seller + admin
 │  ├─ mobile/       # GĐ3, chưa scaffold
-│  └─ ai-triage/    # GĐ3, chưa scaffold
+│  └─ ai-triage/    # FastAPI + Qwen3-VL; chỉ hỗ trợ người duyệt, chưa đánh giá độ chính xác
 ├─ packages/
 │  ├─ backend/      # Module server-only dùng chung bởi api và worker
 │  ├─ shared/       # Type, enum, Zod schema và hằng số
@@ -51,7 +51,7 @@ Chỉ tạo interface cho biên thật: external provider, clock/ID cần test, 
 | `apps/api` | NestJS HTTP composition root, authz, orchestration đồng bộ | Bản sao logic module; job loop dài; gọi side effect ngoài trong DB transaction |
 | `apps/worker` | Claim PostgreSQL outbox, scheduled job, retry/dead-letter, reconciliation/retention | HTTP controller hoặc business rule riêng khác API |
 
-`apps/api` và `apps/worker` cùng gọi implementation trong `@reboxe/backend`; chúng không gọi HTTP lẫn nhau để dùng lại nghiệp vụ. `apps/mobile` và `apps/ai-triage` chỉ là placeholder GĐ3, chưa thuộc runtime MVP.
+`apps/api` và `apps/worker` cùng gọi implementation trong `@reboxe/backend`; chúng không gọi HTTP lẫn nhau để dùng lại nghiệp vụ. `apps/mobile` còn là placeholder. `apps/ai-triage` là dịch vụ private riêng, chỉ bật khi cấu hình URL/token/model; không đưa ra quyết định tài chính.
 
 ## Quy tắc phụ thuộc
 
@@ -105,7 +105,7 @@ Chỉ tạo interface cho biên thật: external provider, clock/ID cần test, 
 - Workflow chạm reservation/tiền/case khóa theo `wallet → listings → order → sub_order → hold → case/dispute/refund`; cùng idempotency key nhưng payload hash khác trả conflict, không replay như request cũ.
 - Mọi evidence read/delete/hold target đúng provider/bucket/key/version và verify checksum; appeal dùng chung một `dispute_case` nên không khởi động retention sớm theo từng round.
 - Payment provider và evidence provider còn là gate; không hardcode PayOS hoặc Supabase Storage như quyết định production.
-- `SPREADSHEET` và `PLATFORM_API` là hai kênh nhập bản kê ngang hàng qua cùng contract chuẩn hóa. Bản đầu chỉ bật CSV/XLSX; nút API hiển thị “Sắp có” tới khi đủ partner/ToS gate. Mobile, AI, Public API ERP, loyalty/voucher và multi-seller checkout đều bị hoãn.
+- CSV/XLSX đã có; OAuth sàn có consent, mã hóa token, refresh và disconnect nhưng chưa đồng bộ dữ liệu bản kê. AI đã có dịch vụ và giao diện hỗ trợ, chưa được đánh giá trên dữ liệu unboxing REBOXE. Xem `docs/10-ENTERPRISE-DELIVERY.md` để phân biệt phần đã làm và phần chưa hoàn thành của đợt mở rộng.
 
 ## Luồng MVP hiện hành
 

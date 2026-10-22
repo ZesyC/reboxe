@@ -1,8 +1,8 @@
 # REBOXE
 
-Nền tảng TMĐT B2B2C cho phép seller bán lại **nguyên kiện hàng hoàn chưa mở kiểm tra**. Contract hỗ trợ hai kênh nhập bản kê ngang hàng, nhưng MVP hiện chỉ bật CSV/XLSX; kết nối trực tiếp Shopee/TikTok vẫn ghi “Sắp có”. Sau preview → commit, seller quét mã để tìm kiện đã nhập và đăng bán nguyên kiện.
+Nền tảng TMĐT B2B2C cho phép seller bán lại **nguyên kiện hàng hoàn chưa mở kiểm tra**. CSV/XLSX hỗ trợ preview → commit → quét mã → đăng bán. Luồng cấp quyền Shopee/TikTok đã được bổ sung; đồng bộ bản kê qua API sàn còn phải triển khai.
 
-Repo hiện chứa MVP web/API/worker chạy end-to-end bằng dữ liệu synthetic: package-backed listing, checkout `SANDBOX_COD`, ledger/hold cân sổ, fake fulfillment, dispute/evidence metadata, legal/privacy/notification và finance projection. Đây chưa phải production marketplace; payment, carrier và evidence provider thật vẫn bị khóa bởi các gate pháp lý/nhà cung cấp.
+Repo có web/API/worker và dịch vụ AI riêng. Đợt mở rộng thêm OAuth sàn, quét camera, báo tổng checkout từ server, nạp ngân sách quảng bá qua payOS, báo phí GHN, upload S3 Object Lock và AI hỗ trợ người duyệt. Các kết nối ngoài chưa nghiệm thu với tài khoản thật. Mua hàng, giữ tiền, giao hàng và hoàn tiền vẫn chạy trong phạm vi sandbox; chưa phải sản phẩm doanh nghiệp hoàn chỉnh. Xem [trạng thái triển khai](docs/10-ENTERPRISE-DELIVERY.md) và [pháp lý trước deploy](docs/11-PREDEPLOY-LEGAL-REVIEW.md).
 
 ## Bắt đầu từ đâu
 
@@ -25,7 +25,7 @@ Repo hiện chứa MVP web/API/worker chạy end-to-end bằng dữ liệu synth
 ## Ba vấn đề cần xử lý sớm nhất
 
 1. **PSP/mô hình ký quỹ, refund và payout chưa được Legal + Business chốt**; payment production đang `BLOCKED` theo A10.
-2. **Nhà cung cấp evidence WORM/Object Lock chưa được chọn**; Supabase Storage không thay thế gate này.
+2. **S3 Object Lock đã được chọn và có adapter/template hạ tầng**; còn thiếu nghiệm thu kho thật, che PII, quyền xem và quy trình lưu/xóa sau khi đóng hồ sơ.
 3. **Supabase Singapore trước A14 chỉ dùng dev/staging với dữ liệu synthetic/đã ẩn danh**; dữ liệu thật và production cần DPA/data-transfer/legal go/no-go.
 
 Công thức hold, activation deposit, checkout một seller, TTL và phạm vi MVP đã được chốt trong tài liệu 07; không còn là câu hỏi mở.

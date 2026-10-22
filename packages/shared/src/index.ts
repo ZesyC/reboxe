@@ -5,3 +5,8 @@ export * from "./identity";
 export * from "./inventory";
 export * from "./kyc";
 export * from "./commerce";
+export * from "./marketplace";
+export * from "./ai";
+export * from "./evidence";
+export * from "./payments";
+export * from "./shipping";

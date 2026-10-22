@@ -2,6 +2,7 @@
 import type { CommerceOrder } from "@reboxe/shared";
 import { useEffect, useState } from "react";
 import { createBrowserApiClient } from "../platform/api/browser";
+import { EvidenceUploader } from "./evidence-uploader";
 
 const api = createBrowserApiClient();
 const orderStatusLabel: Record<CommerceOrder["status"], string> = {
@@ -33,13 +34,5 @@ export function SellerDisputes() {
     const body = replies[caseId]?.trim(); if (!body) return;
     await api.replyDispute(caseId, body); setNotice(`Đã phản hồi ${caseId}.`); setReplies((items) => ({ ...items, [caseId]: "" }));
   }
-  async function evidence(caseId: string, file?: File) {
-    if (!file || file.size > 20 * 1024 * 1024) return setNotice("Bằng chứng phải nhỏ hơn 20 MiB.");
-    const checksum = [...new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer()))]
-      .map((byte) => byte.toString(16).padStart(2, "0")).join("");
-    const record = await api.createProcessingRecord({ purpose: "SELLER_EVIDENCE", targetType: "DISPUTE", targetId: caseId, noticeVersion: "2026-09-07" });
-    await api.addDisputeEvidence(caseId, { processingRecordId: record.id, fileName: file.name, sizeBytes: file.size, checksum });
-    setNotice("Đã lưu thông tin bằng chứng. Người mua và quản trị viên sẽ xem đúng phiên bản đã ghi nhận.");
-  }
-  return <section className="rounded-xl bg-white p-6"><h1 className="text-2xl font-bold">Khiếu nại / Hoàn trả</h1>{notice ? <p className="mt-3 text-sm text-emerald-700" role="status">{notice}</p> : null}<div className="mt-6 space-y-3">{cases.length === 0 ? <p className="text-sm text-[var(--muted)]">Chưa có khiếu nại.</p> : cases.map((item) => <article className="border p-4" key={item.id}><strong>{item.productTitle}</strong><span className="float-right">{disputeStatusLabel[item.status] ?? "Đang xử lý"}</span><p className="mt-1 text-xs text-[var(--muted)]">{item.id} · Đơn {item.orderId}</p><p className="mt-2 text-sm">{item.reason}</p><textarea aria-label={`Phản hồi ${item.id}`} className="mt-3 min-h-20 w-full border p-2 text-sm" onChange={(event) => setReplies((values) => ({ ...values, [item.id]: event.target.value }))} value={replies[item.id] ?? ""} /><div className="mt-2 flex gap-2"><button className="rounded bg-[var(--accent)] px-3 py-2 text-sm font-bold text-white" disabled={(replies[item.id]?.trim().length ?? 0) < 3} onClick={() => void reply(item.id)}>Gửi phản hồi</button><label className="cursor-pointer rounded border px-3 py-2 text-sm font-bold">Thêm bằng chứng<input accept="image/*,video/*" className="sr-only" onChange={(event) => void evidence(item.id, event.target.files?.[0])} type="file" /></label></div></article>)}</div></section>;
+  return <section className="rounded-xl bg-white p-6"><h1 className="text-2xl font-bold">Khiếu nại / Hoàn trả</h1>{notice ? <p className="mt-3 text-sm text-emerald-700" role="status">{notice}</p> : null}<div className="mt-6 space-y-3">{cases.length === 0 ? <p className="text-sm text-[var(--muted)]">Chưa có khiếu nại.</p> : cases.map((item) => <article className="border p-4" key={item.id}><strong>{item.productTitle}</strong><span className="float-right">{disputeStatusLabel[item.status] ?? "Đang xử lý"}</span><p className="mt-1 text-xs text-[var(--muted)]">{item.id} · Đơn {item.orderId}</p><p className="mt-2 text-sm">{item.reason}</p><textarea aria-label={`Phản hồi ${item.id}`} className="mt-3 min-h-20 w-full border p-2 text-sm" onChange={(event) => setReplies((values) => ({ ...values, [item.id]: event.target.value }))} value={replies[item.id] ?? ""} /><div className="mt-2 flex gap-2"><button className="rounded bg-[var(--accent)] px-3 py-2 text-sm font-bold text-white" disabled={(replies[item.id]?.trim().length ?? 0) < 3} onClick={() => void reply(item.id)}>Gửi phản hồi</button><EvidenceUploader caseId={item.id} purpose="SELLER_EVIDENCE" /></div></article>)}</div></section>;
 }

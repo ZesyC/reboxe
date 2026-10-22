@@ -1,0 +1,31 @@
+{
+  "reviewedAt": "2026-10-20",
+  "datasets": [
+    {
+      "id": "visa",
+      "source": "https://github.com/amazon-science/spot-diff",
+      "download": "https://amazon-visual-anomaly.s3.us-west-2.amazonaws.com/VisA_20220922.tar",
+      "license": "CC-BY-4.0",
+      "commercialCandidate": true,
+      "purpose": "Evaluate visible surface/structural anomaly recognition; not unboxing dispute or fraud validation",
+      "attribution": "Zou et al. SPot-the-Difference Self-Supervised Pre-training for Anomaly Detection and Segmentation, ECCV 2022",
+      "status": "SOURCE_REVIEWED_NOT_DOWNLOADED"
+    },
+    {
+      "id": "mvtec-ad-2",
+      "source": "https://www.mvtec.com/research-teaching/datasets/mvtec-ad-2",
+      "license": "CC-BY-NC-SA-4.0",
+      "commercialCandidate": false,
+      "purpose": "Excluded from commercial training without separate permission",
+      "status": "EXCLUDED"
+    },
+    {
+      "id": "reboxe-unboxing",
+      "source": "Controlled recordings and separately authorized pilot evidence",
+      "license": "RIGHTS_REVIEW_REQUIRED",
+      "commercialCandidate": false,
+      "purpose": "Target-domain evaluation with seller/package separated train-validation-test split and PII redaction",
+      "status": "NOT_COLLECTED"
+    }
+  ]
+}
