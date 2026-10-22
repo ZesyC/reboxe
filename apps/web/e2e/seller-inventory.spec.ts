@@ -208,7 +208,7 @@ test("chooses a category, edits a draft and sends it to policy review", async ({
   await expect(page.getByRole("row", { name: /Draft E2E đã sửa/ })).not.toContainText("Xem công khai");
 });
 
-test("shows two manifest sources and previews the spreadsheet source only", async ({ page }) => {
+test("links to platform connections and previews the spreadsheet source", async ({ page }) => {
   let importRequests = 0;
   const inventoryPackages: Array<Record<string, unknown>> = [];
   await page.route("**/v1/**", async (route) => {
@@ -239,6 +239,12 @@ test("shows two manifest sources and previews the spreadsheet source only", asyn
     }
     if (path === `/v1/shops/${shopId}/return-packages`) {
       await route.fulfill({ json: inventoryPackages });
+      return;
+    }
+    if (path === `/v1/shops/${shopId}/marketplaces`) {
+      await route.fulfill({ json: { connections: [], availability: [
+        { platform: "SHOPEE", configured: false }, { platform: "TIKTOK", configured: false }
+      ] } });
       return;
     }
     if (path === `/v1/shops/${shopId}/return-imports/preview`) {
@@ -294,10 +300,16 @@ test("shows two manifest sources and previews the spreadsheet source only", asyn
   });
 
   await page.goto("/seller/products/new");
-  const platformButton = page.getByRole("button", { name: /Import trực tiếp từ Shopee\/TikTok/ });
-  await expect(platformButton).toBeDisabled();
-  await expect(platformButton).toContainText("Sắp có");
+  const platformLink = page.getByRole("link", { name: /Kết nối Shopee\/TikTok/ });
+  await expect(platformLink).toHaveAttribute("href", "/seller/connections");
+  await platformLink.click();
+  await expect(page.getByRole("heading", { name: "Kết nối nguồn hàng" })).toBeVisible();
+  const connectButtons = page.getByRole("button", { name: "Kết nối shop", exact: true });
+  await expect(connectButtons).toHaveCount(2);
+  await expect(connectButtons.nth(0)).toBeDisabled();
+  await expect(connectButtons.nth(1)).toBeDisabled();
   expect(importRequests).toBe(0);
+  await page.getByRole("link", { name: "Nhập bản kê CSV/Excel", exact: true }).click();
 
   const chooserPromise = page.waitForEvent("filechooser");
   await page.getByRole("button", { name: /Import bằng CSV\/XLSX/ }).click();

@@ -23,24 +23,34 @@ test.beforeEach(async ({ page }) => {
   await page.route("**/v1/shops/RBX-DEMO-SHOP-2026/finance", (route) => route.fulfill({ json: financeSnapshot }));
 });
 
-test("renders the finance demo for three purchased products", async ({ page }) => {
+test("renders the supplied finance snapshot", async ({ page }) => {
   await page.goto("/seller/finance");
 
   await expect(page.getByText("300.000 VNĐ", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("850.000 VNĐ", { exact: true }).first()).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Xu hướng doanh thu 6 tháng gần nhất" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Xu hướng doanh thu theo tháng" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Doanh thu theo sản phẩm" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Cơ cấu tài chính" })).toBeVisible();
   await expect(page.getByRole("img", { name: "Cơ cấu: khả dụng 26%, tạm khóa 74%" })).toHaveCSS("background-image", /26%/);
   await expect(page.getByText("Dữ liệu mô phỏng — không phải số dư có thể rút.", { exact: true })).toHaveCount(0);
 });
 
-test("shows the finance demo on mobile", async ({ page }) => {
+test("shows the finance snapshot on mobile", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/seller/finance");
 
   await expect(page.getByText("300.000 VNĐ", { exact: true }).first()).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Xu hướng doanh thu 6 tháng gần nhất" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Xu hướng doanh thu theo tháng" })).toBeVisible();
+});
+
+test("warns when completed orders are missing their commission snapshot", async ({ page }) => {
+  await page.route("**/v1/shops/RBX-DEMO-SHOP-2026/finance", (route) => route.fulfill({ json: {
+    ...financeSnapshot, unpricedOrderCount: 2
+  } }));
+  await page.goto("/seller/finance");
+  await expect(page.getByText("GIÁ TRỊ ĐƠN HOÀN THÀNH", { exact: true })).toBeVisible();
+  await expect(page.getByRole("status")).toContainText("Có 2 đơn cũ chưa lưu hoa hồng");
+  await expect(page.getByRole("status")).toContainText("không phải xác nhận tiền đã về ngân hàng");
 });
 
 test("shows a neutral composition when both balances are zero", async ({ page }) => {
