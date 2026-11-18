@@ -1,9 +1,11 @@
 import { ProductCard } from "../features/product-card";
+import { SiteStatus } from "../features/site-status";
 import { createPublicApiClient } from "../platform/api/server";
 
 export default async function HomePage() {
   const result = await createPublicApiClient().listPublicListings().catch(() => null);
-  const sponsored = result?.sponsored ?? [];
+  if (result === null) return <SiteStatus code={502} />;
+  const sponsored = result.sponsored ?? [];
 
   return (
     <main>
@@ -14,9 +16,7 @@ export default async function HomePage() {
         </div>
       </section>
       <section className="min-h-[760px] bg-[var(--paper)] px-4 pb-8 pt-5 sm:px-6">
-        {result === null ? (
-          <p className="reboxe-container rounded-lg border border-amber-200 bg-amber-50 p-5 text-center text-pretty text-amber-900" role="alert">Không thể tải sản phẩm. Vui lòng thử lại sau.</p>
-        ) : sponsored.length === 0 && result.items.length === 0 ? (
+        {sponsored.length === 0 && result.items.length === 0 ? (
           <p className="reboxe-container rounded-lg border border-[var(--line)] bg-white p-8 text-center text-pretty text-[var(--muted)]">Chưa có sản phẩm đang bán.</p>
         ) : (
           <div className="reboxe-container grid grid-cols-1 gap-x-3 gap-y-4 min-[440px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-[repeat(6,200px)]">

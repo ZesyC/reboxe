@@ -1,5 +1,7 @@
+import { ApiClientError } from "@reboxe/api-client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { SiteStatus } from "../../../features/site-status";
 import { createPublicApiClient } from "../../../platform/api/server";
 
 const legalLinks = [
@@ -106,7 +108,12 @@ function renderBlocks(body: string) {
 export default async function LegalPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   let artifact: { title: string; body: string; version: string; effectiveAt: string };
-  try { artifact = await createPublicApiClient().getLegalArtifact(slug); } catch { notFound(); }
+  try {
+    artifact = await createPublicApiClient().getLegalArtifact(slug);
+  } catch (error) {
+    if (error instanceof ApiClientError && error.status === 404) notFound();
+    return <SiteStatus code={502} />;
+  }
 
   return (
     <main className="bg-[var(--paper)] px-4 py-8 sm:px-6 sm:py-10">

@@ -5,6 +5,7 @@ import { CartActions } from "../../../../features/cart-actions";
 import { conditionLabels, formatPrice, nameInitials, sealStatusLabels } from "../../../../features/commerce-data";
 import { ProductVisual, ReboxeBadge } from "../../../../features/commerce-ui";
 import { ProductCard } from "../../../../features/product-card";
+import { SiteStatus } from "../../../../features/site-status";
 import { createPublicApiClient } from "../../../../platform/api/server";
 
 function DetailRow({ label, value }: { label: string; value: string }) {
@@ -24,7 +25,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
     listing = await api.getPublicListing(id);
   } catch (error) {
     if (error instanceof ApiClientError && error.status === 404) notFound();
-    throw error;
+    return <SiteStatus code={502} />;
   }
 
   const [relatedPage, categories, shop] = await Promise.all([
