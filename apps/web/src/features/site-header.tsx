@@ -43,24 +43,24 @@ function UtilityNavigation({ compact = false }: { compact?: boolean }) {
   }
 
   return (
-    <nav aria-label="Điều hướng tiện ích" className={`reboxe-container flex min-h-9 flex-wrap items-center justify-between gap-x-4 gap-y-1 text-white ${compact ? "text-xs sm:text-[13px]" : "text-xs sm:text-sm"}`}>
+    <nav aria-label="Điều hướng tiện ích" className={`reboxe-container flex min-h-9 flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[var(--on-accent-header)] ${compact ? "text-xs sm:text-[13px]" : "text-xs sm:text-sm"}`}>
       <div className="flex items-center gap-3">
         <Link className="inline-flex min-h-9 items-center py-1 hover:underline" href="/seller/inventory">Kênh Người Bán</Link>
       </div>
       <div className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1">
         <Link className="inline-flex min-h-9 items-center py-1 hover:underline" href="/account/notifications">Thông báo</Link>
         <Link className="inline-flex min-h-9 items-center py-1 hover:underline" href="/support">Hỗ trợ</Link>
-        <span aria-hidden className="text-white/60">|</span>
+        <span aria-hidden className="opacity-60">|</span>
         {name ? (
           <>
             <Link className="inline-flex min-h-9 items-center py-1 font-medium hover:underline" href="/account/profile">{name}</Link>
-            <span aria-hidden className="text-white/60">|</span>
+            <span aria-hidden className="opacity-60">|</span>
             <button className="inline-flex min-h-9 items-center py-1 hover:underline" onClick={logout} type="button">Đăng xuất</button>
           </>
         ) : (
           <>
             <Link className="inline-flex min-h-9 items-center py-1 hover:underline" href="/register">Đăng ký</Link>
-            <span aria-hidden className="text-white/60">|</span>
+            <span aria-hidden className="opacity-60">|</span>
             <Link className="inline-flex min-h-9 items-center py-1 hover:underline" href="/login">Đăng nhập</Link>
           </>
         )}
@@ -72,7 +72,7 @@ function UtilityNavigation({ compact = false }: { compact?: boolean }) {
 function ReboxeBrand({ section }: { section?: string | undefined }) {
   return (
     <Link className="flex min-h-11 shrink-0 items-center gap-2.5 text-white" href="/">
-      <Image alt="" aria-hidden height={38} src="/reboxe/logo.png" width={38} />
+      <Image alt="" aria-hidden height={38} src="/reboxe/logo.png" unoptimized width={38} />
       <strong className="text-2xl leading-none sm:text-[30px]">REBOXE</strong>
       {section ? <span aria-hidden className="h-7 w-px bg-white/80" /> : null}
       {section ? <span className="whitespace-nowrap text-lg leading-7 sm:text-[22px]">{section}</span> : null}
@@ -133,7 +133,7 @@ function CheckoutHeader() {
       <div className="min-h-20 bg-white px-4 py-4 sm:px-6">
         <div className="reboxe-container flex h-full flex-wrap items-center gap-y-2">
           <Link className="flex items-center gap-3" href="/">
-            <Image alt="" aria-hidden height={38} src="/reboxe/logo.png" width={38} />
+            <Image alt="" aria-hidden height={38} src="/reboxe/logo.png" unoptimized width={38} />
             <strong className="text-2xl leading-none text-[var(--accent)] sm:text-[30px]">REBOXE</strong>
           </Link>
           <span aria-hidden className="mx-4 h-8 w-px bg-[var(--line)]" />
@@ -152,7 +152,7 @@ function SellerHeader() {
     <header className="relative z-40 h-[52px] border-b border-[var(--line)] bg-white">
       <div className="flex h-full items-center px-4">
         <Link aria-label="REBOXE" className="ml-11 inline-flex min-h-10 shrink-0 items-center gap-2 rounded-md px-1" href="/">
-          <Image alt="" aria-hidden height={28} src="/reboxe/logo.png" width={28} />
+          <Image alt="" aria-hidden height={28} src="/reboxe/logo.png" unoptimized width={28} />
         </Link>
         <nav aria-label="Breadcrumb Kênh người bán" className="flex min-w-0 items-center">
           <Link className="ml-2 inline-flex min-h-10 items-center px-1 text-[13px] text-[var(--muted)] hover:text-[var(--accent)] hover:underline" href="/">Trang chủ</Link>
@@ -186,7 +186,7 @@ function AdminHeader({ pathname }: { pathname: string }) {
     <header className="relative z-40 border-b border-[var(--line)] bg-white px-4 py-2 sm:px-6">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2">
         <Link className="inline-flex min-h-10 items-center gap-2 font-bold text-[var(--ink)]" href="/">
-          <Image alt="" aria-hidden height={28} src="/reboxe/logo.png" width={28} />
+          <Image alt="" aria-hidden height={28} src="/reboxe/logo.png" unoptimized width={28} />
           <span>REBOXE · Quản trị</span>
         </Link>
         <nav aria-label="Điều hướng quản trị" className="flex flex-wrap items-center gap-1">

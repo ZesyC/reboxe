@@ -94,7 +94,7 @@ export function CheckoutPreview({ listingIds }: { listingIds: string[] }) {
             <section className="overflow-hidden rounded-lg border border-[var(--line)] bg-white shadow-[0_3px_10px_rgba(16,40,69,0.05)]">
               {items.map((listing) => (
                 <article className="grid gap-4 border-b border-[var(--line)] p-5 last:border-b-0 sm:grid-cols-[86px_1fr_auto] sm:items-center sm:p-6" key={listing.id}>
-                  <ProductVisual className="size-[86px] bg-[var(--accent-header)] text-sm" label={listing.categoryId.toUpperCase()} src={listing.images[0]?.url} />
+                  <ProductVisual className="size-[86px] bg-[var(--accent)] text-sm" label={listing.categoryId.toUpperCase()} src={listing.images[0]?.url} />
                   <div className="min-w-0">
                     <Link className="font-medium text-[var(--ink)] hover:text-[var(--accent)] hover:underline" href={`/listings/${listing.id}`}>{listing.title}</Link>
                     <Link className="mt-1 block text-xs text-[var(--accent)] hover:underline" href={`/shops/${listing.shopId}`}>{listing.shopDisplayName}</Link>

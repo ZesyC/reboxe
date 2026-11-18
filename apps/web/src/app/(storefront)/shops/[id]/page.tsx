@@ -50,7 +50,7 @@ export default async function ShopDetailPage({
       <section className="bg-white px-4 pt-6 sm:px-6">
         <div className="reboxe-container">
           <div className="grid gap-5 pb-5 lg:grid-cols-[430px_1fr] lg:gap-8">
-            <div className="flex min-h-[148px] items-center gap-4 rounded-xl bg-[var(--accent-header)] p-5 text-white">
+            <div className="flex min-h-[148px] items-center gap-4 rounded-xl bg-[var(--accent-header)] p-5 text-[var(--on-accent-header)]">
               {shop?.avatarUrl ? (
                 <img
                   alt={`Ảnh đại diện ${shop.displayName}`}
@@ -68,10 +68,10 @@ export default async function ShopDetailPage({
               <div className="min-w-0">
                 <h1 className="truncate text-xl font-bold">{shopName}</h1>
                 {shop?.verified ? (
-                  <p className="mt-1 text-xs font-semibold text-white">Đã xác minh eKYC · REBOXE</p>
+                  <p className="mt-1 text-xs font-semibold">Đã xác minh eKYC · REBOXE</p>
                 ) : null}
-                <p className="mt-1 text-xs text-white/90">{shop ? "Đang hoạt động" : "Không thể tải thông tin cửa hàng"}</p>
-                {shop?.description ? <p className="mt-1 line-clamp-2 text-xs text-white/90">{shop.description}</p> : null}
+                <p className="mt-1 text-xs">{shop ? "Đang hoạt động" : "Không thể tải thông tin cửa hàng"}</p>
+                {shop?.description ? <p className="mt-1 line-clamp-2 text-xs">{shop.description}</p> : null}
               </div>
             </div>
             <dl className="grid grid-cols-2 gap-x-5 gap-y-4 py-2 sm:grid-cols-2 lg:grid-cols-4">

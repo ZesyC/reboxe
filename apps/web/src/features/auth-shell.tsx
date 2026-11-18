@@ -7,7 +7,7 @@ export function AuthHeader({ title }: { title: string }) {
     <header className="min-h-[84px] border-b border-[var(--line)] bg-white px-4 py-4 sm:px-6">
       <div className="mx-auto flex h-full w-full max-w-[960px] flex-wrap items-center gap-3">
         <Link aria-label="Về trang chủ" className="inline-flex min-h-11 shrink-0 items-center gap-2.5" href="/">
-          <Image alt="" aria-hidden height={36} src="/reboxe/logo.png" width={36} />
+          <Image alt="" aria-hidden height={36} src="/reboxe/logo.png" unoptimized width={36} />
           <span className="text-[28px] font-bold leading-none text-[var(--ink)]">REBOXE</span>
         </Link>
         <span aria-hidden className="h-[26px] w-px bg-[var(--line)]" />
@@ -22,17 +22,17 @@ export function AuthBody({ children }: { children: ReactNode }) {
   return (
     <main className="flex min-h-[calc(100vh-84px)] items-center bg-[var(--accent-header)] px-4 py-10 sm:px-6">
       <div className="mx-auto grid w-full max-w-[960px] items-center gap-10 lg:grid-cols-[1fr_420px]">
-        <div className="hidden text-white lg:block">
+        <div className="hidden text-[var(--on-accent-header)] lg:block">
           <div className="flex items-center gap-3">
             <span className="grid size-14 place-items-center rounded-2xl bg-white/95 p-2 shadow-sm">
-              <Image alt="" aria-hidden height={40} src="/reboxe/logo.png" width={40} />
+              <Image alt="" aria-hidden height={40} src="/reboxe/logo.png" unoptimized width={40} />
             </span>
             <span className="text-3xl font-bold tracking-tight">REBOXE</span>
           </div>
           <h2 className="mt-6 text-balance text-3xl font-semibold leading-snug">
             Sàn thanh lý nguyên kiện hàng hoàn minh bạch
           </h2>
-          <p className="mt-3 max-w-[44ch] text-base leading-relaxed text-white/90">
+          <p className="mt-3 max-w-[44ch] text-base leading-relaxed">
             Kết nối nguồn kiện hoàn chưa mở kiểm tra từ người bán đã xác minh tới người mua với thông tin bản kê rõ ràng và quy trình đối soát minh bạch.
           </p>
         </div>

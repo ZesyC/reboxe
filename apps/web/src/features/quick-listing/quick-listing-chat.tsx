@@ -20,7 +20,7 @@ function AssistantBubble({ children }: { children: ReactNode }) {
   return (
     <div className="flex items-start gap-2.5 sm:gap-3">
       <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-[11px] border border-[var(--line)] bg-white sm:size-9">
-        <Image alt="" height={19} src="/reboxe/logo.png" width={19} />
+        <Image alt="" height={19} src="/reboxe/logo.png" unoptimized width={19} />
       </span>
       <div className="min-w-0 max-w-[calc(100%-2.625rem)] sm:max-w-[85%]">
         <p className="mb-1.5 text-xs font-semibold text-[var(--muted)]">Trợ lý REBOXE</p>
@@ -186,7 +186,7 @@ export function QuickListingChat({ shopId, categories }: { shopId: string; categ
       <header className="flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-[var(--line)] px-3.5 py-3 sm:px-5 sm:py-3.5">
         <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
           <div aria-hidden className="grid size-10 shrink-0 place-items-center rounded-[13px] border border-[var(--line)] bg-[var(--accent-soft)] sm:size-11">
-            <Image alt="" height={23} src="/reboxe/logo.png" width={23} />
+            <Image alt="" height={23} src="/reboxe/logo.png" unoptimized width={23} />
           </div>
           <div>
             <h1 className="text-lg leading-tight font-bold sm:text-xl" id="quick-listing-title">Đăng nhanh</h1>
