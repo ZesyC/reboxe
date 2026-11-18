@@ -2,50 +2,121 @@
 
 :root {
   color-scheme: light;
-  --ink: #102845;
-  --muted: #66758b;
+  --ink: #0f2440;
+  --muted: #4b5d75;
   --paper: #f4f7fb;
   --card: #ffffff;
-  --accent: #477cc3;
-  --accent-strong: #3567b0;
-  --accent-header: #4c83d4;
+  --accent: #2d5fa8;
+  --accent-strong: #234d8c;
+  --accent-header: #2f62ad;
   --accent-soft: #eef5fd;
   --nav-surface: #eef5fd;
-  --line: #dce5f0;
-  --line-strong: #cbd7e6;
-  --success: #07966b;
-  --warning: #c97705;
-  --danger: #d92d4c;
+  --line: #d4dfec;
+  --line-strong: #b9cadf;
+  --placeholder: #5a6c82;
+  --success: #067a56;
+  --warning: #9a5504;
+  --danger: #c41e3a;
 }
 
-* { box-sizing: border-box; }
-html {
-  background: var(--paper);
-  overscroll-behavior: none;
-}
-body {
-  margin: 0;
-  background: var(--paper);
-  color: var(--ink);
-  font-family: var(--font-roboto), Roboto, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  overscroll-behavior: none;
-}
-a { color: inherit; text-decoration: none; }
-button, input, select, textarea { font: inherit; }
-button { cursor: pointer; }
-button:disabled { cursor: not-allowed; }
-input, select, textarea { color: var(--ink); }
-input::placeholder, textarea::placeholder { color: #98a6b8; }
-button:focus-visible, a:focus-visible {
-  outline: 3px solid rgb(71 124 195 / 24%);
-  outline-offset: 2px;
-}
-input:focus, input:focus-visible, select:focus, select:focus-visible, textarea:focus, textarea:focus-visible {
-  outline: none;
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    background: var(--paper);
+    overscroll-behavior: none;
+  }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans), "Be Vietnam Pro", system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--ink);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  input,
+  select,
+  textarea {
+    color: var(--ink);
+  }
+
+  select:not([multiple]):not([size]) {
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 16 16'%3E%3Cpath stroke='%234b5d75' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.75' d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 0.95rem center;
+    background-repeat: no-repeat;
+    background-size: 16px 16px;
+  }
+
+  select:not([multiple]):not([size])::picker-icon {
+    display: none;
+  }
+
+  select:not([multiple]):not([size])::-ms-expand {
+    display: none;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--placeholder);
+    opacity: 1;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  summary:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--accent-strong);
+    outline-offset: 2px;
+  }
+
+  [data-focus-ring-parent] input:focus-visible,
+  [data-focus-ring-parent] textarea:focus-visible {
+    outline: none;
+  }
 }
 
-body:has(> [data-quick-listing-shell]) > footer { display: none; }
+body:has(> #main-content > [data-quick-listing-shell]) > footer,
+body:has(> [data-quick-listing-shell]) > footer {
+  display: none;
+}
 
 .reboxe-container {
   margin-inline: auto;
@@ -53,19 +124,16 @@ body:has(> [data-quick-listing-shell]) > footer { display: none; }
   max-width: 1264px;
 }
 
-@media (min-width: 1440px) {
-  .reboxe-container {
-    margin-left: calc((100vw - 1264px) / 2);
-    margin-right: 0;
-    width: 1264px;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-pulse {
+    animation: none;
+  }
+
+  [data-motion-reduce-instant] {
+    transition-duration: 0ms !important;
   }
 }

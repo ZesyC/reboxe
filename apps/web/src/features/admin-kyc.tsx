@@ -105,7 +105,7 @@ export function AdminKyc() {
 
   return <main className="mx-auto max-w-6xl space-y-6 p-5 sm:p-8">
     <div className="flex flex-wrap items-center justify-between gap-4">
-      <div><p className="text-sm text-[var(--muted)]">REBOXE · Quản trị</p><h1 className="text-3xl font-bold">Duyệt hồ sơ người bán</h1></div>
+      <div><p className="text-sm text-[var(--muted)]">REBOXE · Quản trị</p><h1 className="text-2xl font-bold text-balance sm:text-3xl">Duyệt hồ sơ người bán</h1></div>
       <button className={button} disabled={busy} onClick={() => void reload()}>Tải lại hàng đợi</button>
     </div>
     {error ? <p role="alert" className="rounded-lg bg-amber-50 p-4 text-amber-900">{error}</p> : null}
@@ -119,11 +119,11 @@ export function AdminKyc() {
         <button className={button} disabled={busy}>Xác nhận</button>
       </form>}
     </section> : null}
-    {!queue ? <Link href="/login" className="underline">Đăng nhập</Link> : <div className="grid gap-8 lg:grid-cols-[minmax(240px,1fr)_2fr]">
+    {!queue ? <Link href="/login" className="inline-flex min-h-11 items-center rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-bold text-white hover:bg-[var(--accent-strong)]">Đăng nhập</Link> : <div className="grid gap-8 lg:grid-cols-[minmax(240px,1fr)_2fr]">
       <section aria-label="Hàng đợi KYC" className="space-y-3">
         <h2 className="font-bold">Chờ duyệt · Cũ nhất trước</h2>
         {queue.items.length === 0 ? <p>Không có hồ sơ chờ duyệt trên trang này.</p> : <ul className="divide-y divide-[var(--line)]">
-          {queue.items.map((item) => <li key={item.kycId}><button disabled={busy} onClick={() => void open(item.kycId)} className="w-full py-4 text-left disabled:opacity-50" aria-pressed={detail?.kycId === item.kycId}>
+          {queue.items.map((item) => <li key={item.kycId}><button disabled={busy} onClick={() => void open(item.kycId)} className="min-h-11 w-full rounded-lg px-2 py-3.5 text-left transition-colors hover:bg-[var(--paper)] disabled:opacity-50" type="button" aria-pressed={detail?.kycId === item.kycId}>
             <span className="block font-semibold">{item.shopDisplayName}</span><span className="text-sm text-[var(--muted)]">{new Date(item.submittedAt).toLocaleString("vi-VN")} · {item.provider}</span>
           </button></li>)}
         </ul>}
@@ -146,11 +146,11 @@ export function AdminKyc() {
         <p className="text-sm text-[var(--muted)]">Phê duyệt cho phép đăng bán. Kết quả xác minh MST và ngân hàng được giữ nguyên.</p>
         {detail.status === "MANUAL_REVIEW" ? <form onSubmit={decide} className="space-y-4">
           <fieldset disabled={busy} className="space-y-4">
-            <div><label htmlFor="kyc-decision" className="block">Quyết định</label><select id="kyc-decision" name="decision" required defaultValue="" className="mt-2 block w-full rounded border p-2">
+            <div><label htmlFor="kyc-decision" className="block text-sm font-semibold">Quyết định</label><select id="kyc-decision" name="decision" required defaultValue="" className="mt-2 h-11 w-full rounded-lg border border-[var(--line-strong)] bg-white pl-3 pr-10 text-sm">
               <option value="" disabled>Chọn quyết định</option><option value="APPROVE">Phê duyệt</option><option value="REJECT">Từ chối</option>
             </select></div>
-            <label className="block">Lý do (seller sẽ thấy nội dung này)<textarea name="reason" required maxLength={1000} rows={3} className="mt-2 block w-full rounded border p-2" /></label>
-            <button className={`${button} bg-[var(--accent)] text-white`} disabled={busy}>Gửi quyết định</button>
+            <label className="block text-sm font-semibold">Lý do (seller sẽ thấy nội dung này)<textarea name="reason" required maxLength={1000} rows={3} className="mt-2 block w-full rounded-lg border border-[var(--line-strong)] px-3 py-2.5 text-sm font-normal" /></label>
+            <button className={`${button} min-h-11 bg-[var(--accent)] text-white hover:bg-[var(--accent-strong)]`} disabled={busy} type="submit">Gửi quyết định</button>
           </fieldset>
         </form> : <p>{detail.review?.reason ?? "Hồ sơ đã thay đổi trạng thái. Vui lòng tải lại hàng đợi."}</p>}
       </section> : <p className="text-[var(--muted)]">Chọn một hồ sơ để xem chi tiết.</p>}

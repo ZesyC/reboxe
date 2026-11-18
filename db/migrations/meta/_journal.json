@@ -156,6 +156,8 @@
       "tag": "0021_payos_promotion_topups",
       "breakpoints": true
     },
-    { "idx": 22, "version": "7", "when": 1792429204000, "tag": "0022_payment_channel_block", "breakpoints": true }
+    { "idx": 22, "version": "7", "when": 1792429204000, "tag": "0022_payment_channel_block", "breakpoints": true },
+    { "idx": 23, "version": "7", "when": 1792429205000, "tag": "0023_legal_documents", "breakpoints": true },
+    { "idx": 24, "version": "7", "when": 1792429206000, "tag": "0024_official_legal_texts", "breakpoints": true }
   ]
 }

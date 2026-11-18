@@ -83,31 +83,54 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="bg-white">
+    <div className="bg-[var(--paper)]">
       <AuthHeader title="Đăng ký" />
       <AuthBody>
-        <form className="absolute left-1/2 top-[115px] flex min-h-[586px] w-full max-w-[400px] -translate-x-1/2 flex-col gap-3.5 overflow-hidden rounded bg-white px-[30px] pb-6 pt-[26px] lg:left-auto lg:right-0 lg:translate-x-0" onSubmit={pendingEmail ? verifyOtp : register}>
-          <div className="flex h-11 items-center"><h2 className="text-[22px] font-normal">{pendingEmail ? "Xác thực email" : "Đăng ký"}</h2></div>
+        <form className="flex w-full flex-col gap-3.5 rounded-xl border border-[var(--line)] bg-white p-6 shadow-sm sm:p-7" onSubmit={pendingEmail ? verifyOtp : register}>
+          <div className="pb-1">
+            <h2 className="text-[22px] font-semibold text-[var(--ink)]">{pendingEmail ? "Xác thực email" : "Đăng ký"}</h2>
+          </div>
           {pendingEmail ? (
             <>
               <p className="text-sm text-[var(--muted)]">Nhập mã 6 số đã gửi tới {pendingEmail}.</p>
-              <input aria-label="Mã xác thực" autoComplete="one-time-code" className="h-10 w-full border border-[var(--line)] bg-white px-3.5 text-sm outline-none" inputMode="numeric" maxLength={6} minLength={6} name="token" pattern="[0-9]{6}" placeholder="Mã xác thực" required />
+              <label className="grid gap-1.5 text-sm font-medium text-[var(--ink)]" htmlFor="register-otp">
+                <span>Mã xác thực</span>
+                <input
+                  autoComplete="one-time-code"
+                  className="h-11 w-full rounded-md border border-[var(--line-strong)] bg-white px-3.5 text-sm text-[var(--ink)]"
+                  id="register-otp"
+                  inputMode="numeric"
+                  maxLength={6}
+                  minLength={6}
+                  name="token"
+                  pattern="[0-9]{6}"
+                  placeholder="Mã xác thực"
+                  required
+                />
+              </label>
             </>
           ) : (
             <>
-              <AuthField autoComplete="email" name="email" placeholder="Email" required type="email" />
-              <AuthField autoComplete="new-password" minLength={8} name="password" placeholder="Mật khẩu (ít nhất 8 ký tự)" required type="password" />
-              <AuthField autoComplete="new-password" minLength={8} name="confirmPassword" placeholder="Nhập lại mật khẩu" required type="password" />
+              <AuthField autoComplete="email" label="Email" name="email" placeholder="Email" required type="email" />
+              <AuthField autoComplete="new-password" label="Mật khẩu" minLength={8} name="password" placeholder="Mật khẩu (ít nhất 8 ký tự)" required type="password" />
+              <AuthField autoComplete="new-password" label="Nhập lại mật khẩu" minLength={8} name="confirmPassword" placeholder="Nhập lại mật khẩu" required type="password" />
             </>
           )}
-          <button aria-busy={submitting} className="h-10 w-full bg-[var(--accent-header)] text-sm font-bold text-white hover:bg-[var(--accent-strong)] disabled:cursor-wait disabled:opacity-60" disabled={submitting} type="submit">
+          <button
+            aria-busy={submitting}
+            className="min-h-11 w-full rounded-md bg-[var(--accent)] px-4 text-sm font-bold text-white hover:bg-[var(--accent-strong)] disabled:cursor-wait disabled:opacity-60"
+            disabled={submitting}
+            type="submit"
+          >
             {submitting ? "ĐANG XỬ LÝ..." : pendingEmail ? "XÁC THỰC" : "ĐĂNG KÝ"}
           </button>
-          {error ? <p className="text-center text-sm text-red-600" role="alert">{error}</p> : null}
-          {success ? <p className="text-center text-sm text-emerald-700" role="status">{success}</p> : null}
+          {error ? <p className="rounded-md bg-red-50 px-3 py-2 text-center text-sm text-red-700" role="alert">{error}</p> : null}
+          {success ? <p className="rounded-md bg-emerald-50 px-3 py-2 text-center text-sm text-emerald-800" role="status">{success}</p> : null}
           {pendingEmail ? null : <><OrDivider /><SocialLogin /></>}
           <AuthTerms action="đăng ký" />
-          <p className="text-center text-[13px] text-[var(--muted)]">Bạn đã có tài khoản? <Link className="ml-1 text-[var(--accent)] hover:underline" href="/login">Đăng nhập</Link></p>
+          <p className="text-center text-[13px] text-[var(--muted)]">
+            Bạn đã có tài khoản? <Link className="ml-1 font-medium text-[var(--accent)] hover:underline" href="/login">Đăng nhập</Link>
+          </p>
         </form>
       </AuthBody>
     </div>

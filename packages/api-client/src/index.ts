@@ -85,7 +85,9 @@ export function createApiClient(options: ApiClientOptions) {
         body?.error.requestId
       );
     }
-    return (await response.json()) as T;
+    if (response.status === 204) return null as T;
+    const text = await response.text();
+    return (text ? JSON.parse(text) : null) as T;
   }
 
   return {

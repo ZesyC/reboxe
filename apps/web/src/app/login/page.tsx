@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { AuthBody, AuthField, AuthHeader, AuthTerms, OrDivider, RememberLogin, SocialLogin } from "../../features/auth-shell";
+import { AuthBody, AuthField, AuthHeader, AuthTerms, OrDivider, SocialLogin } from "../../features/auth-shell";
 import { getSupabaseBrowserClient } from "../../platform/auth/browser";
 
 export default function LoginPage() {
@@ -41,22 +41,30 @@ export default function LoginPage() {
     <div className="bg-[var(--paper)]">
       <AuthHeader title="Đăng nhập" />
       <AuthBody>
-        <form className="absolute left-1/2 top-[140px] flex h-[536px] w-full max-w-[400px] -translate-x-1/2 flex-col gap-3 overflow-hidden rounded bg-white px-[30px] py-6 lg:left-auto lg:right-0 lg:translate-x-0" onSubmit={login}>
-          <div className="flex h-[58px] items-center gap-2">
-            <h2 className="text-[22px] font-normal">Đăng nhập</h2>
+        <form className="flex w-full flex-col gap-3.5 rounded-xl border border-[var(--line)] bg-white p-6 shadow-sm sm:p-7" onSubmit={login}>
+          <div className="flex items-center justify-between gap-2 pb-1">
+            <h2 className="text-[22px] font-semibold text-[var(--ink)]">Đăng nhập</h2>
           </div>
-          <AuthField autoComplete="email" name="email" placeholder="Email" required type="email" />
-          <AuthField autoComplete="current-password" name="password" placeholder="Mật khẩu" required type="password" />
-          <div className="flex h-[18px] justify-end"><Link className="text-[13px] text-[var(--accent)] hover:underline" href="/forgot-password">Quên mật khẩu?</Link></div>
-          <button aria-busy={submitting} className="h-10 w-full bg-[var(--accent-header)] text-sm font-bold text-white hover:bg-[var(--accent-strong)] disabled:cursor-wait disabled:opacity-60" disabled={submitting} type="submit">
+          <AuthField autoComplete="email" label="Email" name="email" placeholder="Email" required type="email" />
+          <AuthField autoComplete="current-password" label="Mật khẩu" name="password" placeholder="Mật khẩu" required type="password" />
+          <div className="flex justify-end">
+            <Link className="inline-flex min-h-9 items-center text-[13px] font-medium text-[var(--accent)] hover:underline" href="/forgot-password">Quên mật khẩu?</Link>
+          </div>
+          <button
+            aria-busy={submitting}
+            className="min-h-11 w-full rounded-md bg-[var(--accent)] px-4 text-sm font-bold text-white hover:bg-[var(--accent-strong)] disabled:cursor-wait disabled:opacity-60"
+            disabled={submitting}
+            type="submit"
+          >
             {submitting ? "ĐANG ĐĂNG NHẬP..." : "ĐĂNG NHẬP"}
           </button>
-          {error ? <p className="text-center text-sm text-red-600" role="alert">{error}</p> : null}
-          <RememberLogin />
+          {error ? <p className="rounded-md bg-red-50 px-3 py-2 text-center text-sm text-red-700" role="alert">{error}</p> : null}
           <OrDivider />
           <SocialLogin />
           <AuthTerms action="đăng nhập" />
-          <p className="text-center text-[13px] text-[var(--muted)]">Bạn mới biết đến REBOXE? <Link className="ml-1 text-[var(--accent)] hover:underline" href="/register">Đăng ký</Link></p>
+          <p className="text-center text-[13px] text-[var(--muted)]">
+            Bạn mới biết đến REBOXE? <Link className="ml-1 font-medium text-[var(--accent)] hover:underline" href="/register">Đăng ký</Link>
+          </p>
         </form>
       </AuthBody>
     </div>

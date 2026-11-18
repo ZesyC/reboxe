@@ -16,11 +16,11 @@ function MetricCards({ finance }: { finance: SellerFinanceSnapshot }) {
     { label: finance.unpricedOrderCount ? "GIÁ TRỊ ĐƠN HOÀN THÀNH" : "DOANH THU SAU ĐIỀU CHỈNH", value: finance.netRevenueVnd }
   ];
   return (
-    <div className="grid shrink-0 gap-3 lg:grid-cols-3 xl:gap-3">
+    <div className="grid shrink-0 gap-3 lg:grid-cols-3">
       {metrics.map((metric) => (
-        <article className="flex h-[104px] flex-col gap-2 rounded-xl bg-white px-[18px] py-4 ring-1 ring-inset ring-[var(--line)]" key={metric.label}>
-          <p className="text-[11px] font-medium text-[var(--muted)]">{metric.label}</p>
-          <p className="text-2xl font-bold leading-normal text-[var(--ink)]">{money(metric.value)}</p>
+        <article className="flex min-h-[104px] flex-col gap-2 rounded-xl bg-white px-[18px] py-4 ring-1 ring-inset ring-[var(--line)]" key={metric.label}>
+          <p className="text-xs font-medium text-[var(--muted)]">{metric.label}</p>
+          <p className="text-2xl font-bold leading-normal tabular-nums text-[var(--ink)]">{money(metric.value)}</p>
         </article>
       ))}
     </div>
@@ -28,7 +28,7 @@ function MetricCards({ finance }: { finance: SellerFinanceSnapshot }) {
 }
 
 function RevenueTrend({ finance }: { finance: SellerFinanceSnapshot }) {
-  if (finance.monthlyRevenue.length === 0) return <article className="grid h-[270px] place-items-center rounded-xl text-sm text-[var(--muted)] ring-1 ring-inset ring-[var(--line)]">Chưa có đơn hoàn thành để tổng hợp doanh thu.</article>;
+  if (finance.monthlyRevenue.length === 0) return <article className="grid min-h-[240px] place-items-center rounded-xl p-6 text-center text-sm text-[var(--muted)] ring-1 ring-inset ring-[var(--line)]">Chưa có đơn hoàn thành để tổng hợp doanh thu.</article>;
   const amounts = finance.monthlyRevenue.map((item) => item.amountVnd);
   const min = Math.min(...amounts);
   const range = Math.max(1, Math.max(...amounts) - min);
@@ -39,7 +39,7 @@ function RevenueTrend({ finance }: { finance: SellerFinanceSnapshot }) {
     pointTop: 190 - ((item.amountVnd - min) / range) * 102
   }));
   return (
-    <article className="h-[270px] shrink-0 overflow-x-auto rounded-xl ring-1 ring-inset ring-[var(--line)]">
+    <article className="shrink-0 overflow-x-auto rounded-xl ring-1 ring-inset ring-[var(--line)]">
       <div className="relative h-[268px] min-w-[1122px]">
         <h2 className="absolute left-[19px] top-[17px] text-lg font-bold">Xu hướng doanh thu theo tháng</h2>
         <p className="absolute left-[19px] top-[43px] text-xs text-[var(--muted)]">Giá trị đơn hoàn thành sau các khoản điều chỉnh đã ghi nhận</p>
@@ -48,8 +48,8 @@ function RevenueTrend({ finance }: { finance: SellerFinanceSnapshot }) {
           const next = trend[index + 1];
           return <div key={item.label}>
             {next ? <span className="absolute h-[2px] origin-left bg-[var(--accent)]" style={{ left: item.left, top: item.pointTop + 3, transform: `rotate(${Math.atan2(next.pointTop - item.pointTop, next.left - item.left) * 180 / Math.PI}deg)`, width: Math.hypot(next.left - item.left, next.pointTop - item.pointTop) }} /> : null}
-            <span className="absolute w-20 -translate-x-1/2 text-center text-[11px] font-medium" style={{ left: item.left, top: item.pointTop - 20 }}>{compactMoney(item.amountVnd)}</span>
-            <span className="absolute size-2 -translate-x-1/2 rounded-full bg-[var(--accent)]" style={{ left: item.left, top: item.pointTop }} />
+            <span className="absolute w-20 -translate-x-1/2 text-center text-xs font-medium tabular-nums" style={{ left: item.left, top: item.pointTop - 22 }}>{compactMoney(item.amountVnd)}</span>
+            <span className="absolute size-2.5 -translate-x-1/2 rounded-full bg-[var(--accent)]" style={{ left: item.left, top: item.pointTop }} />
             <span className="absolute top-[221px] w-11 -translate-x-1/2 text-center text-xs text-[var(--muted)]" style={{ left: item.left }}>{item.label}</span>
           </div>;
         })}
@@ -60,21 +60,31 @@ function RevenueTrend({ finance }: { finance: SellerFinanceSnapshot }) {
 
 function RevenueByProduct({ finance }: { finance: SellerFinanceSnapshot }) {
   const maxRevenue = Math.max(1, ...finance.productRevenue.map((item) => item.amountVnd));
-  const products = finance.productRevenue.slice(0, 4).map((item) => ({ ...item, height: Math.max(0, item.amountVnd / maxRevenue * 106.4) }));
+  const products = finance.productRevenue.slice(0, 4).map((item) => ({
+    ...item,
+    percent: Math.round((item.amountVnd / maxRevenue) * 100)
+  }));
   return (
-    <article className="relative min-h-[280px] min-w-0 rounded-xl ring-1 ring-inset ring-[var(--line)]">
-      <h2 className="absolute left-[19px] top-[17px] text-lg font-bold">Doanh thu theo sản phẩm</h2>
-      <p className="absolute left-[19px] top-[43px] text-xs text-[var(--muted)]">So sánh nhóm sản phẩm nổi bật</p>
-      {[83, 124.33, 165.67, 207].map((top) => <span className="absolute left-[53px] right-[51px] h-px bg-[var(--line)]" key={top} style={{ top }} />)}
-      <div className="absolute left-[39px] right-[69px] top-[83px] grid h-[156px] grid-cols-4">
-        {products.map((product) => (
-          <div className="relative" key={product.label}>
-            <span className="absolute left-1/2 w-20 -translate-x-1/2 text-center text-[11px] font-medium" style={{ bottom: product.height + 36 }}>{compactMoney(product.amountVnd)}</span>
-            <span className="absolute bottom-8 left-1/2 w-12 -translate-x-1/2 rounded-[3px] bg-[var(--accent)]" style={{ height: product.height }} />
-            <span className="absolute left-1/2 top-[138px] w-[92px] -translate-x-1/2 text-center text-[11px] text-[var(--muted)]">{product.label}</span>
-          </div>
-        ))}
+    <article className="flex min-h-[280px] min-w-0 flex-col justify-between rounded-xl p-5 ring-1 ring-inset ring-[var(--line)]">
+      <div>
+        <h2 className="text-lg font-bold">Doanh thu theo sản phẩm</h2>
+        <p className="mt-0.5 text-xs text-[var(--muted)]">So sánh nhóm sản phẩm nổi bật</p>
       </div>
+      {products.length === 0 ? (
+        <p className="my-auto text-center text-sm text-[var(--muted)]">Chưa có dữ liệu sản phẩm.</p>
+      ) : (
+        <div className="mt-4 grid grid-cols-4 items-end gap-3 border-b border-[var(--line)] pt-4">
+          {products.map((product) => (
+            <div className="flex flex-col items-center gap-2 pb-2" key={product.label}>
+              <span className="text-center text-xs font-medium tabular-nums text-[var(--ink)]">{compactMoney(product.amountVnd)}</span>
+              <div className="flex h-28 w-full items-end justify-center">
+                <span className="w-10 rounded-t bg-[var(--accent)] sm:w-12" style={{ height: `${Math.max(6, product.percent)}%` }} />
+              </div>
+              <span className="w-full truncate text-center text-xs text-[var(--muted)]" title={product.label}>{product.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </article>
   );
 }
@@ -84,24 +94,40 @@ function FinancialComposition({ finance }: { finance: SellerFinanceSnapshot }) {
   const availablePercent = total ? Math.round(finance.availableBalanceVnd / total * 100) : 0;
   const heldPercent = total ? 100 - availablePercent : 0;
   return (
-    <article className="relative min-h-[280px] min-w-0 rounded-xl ring-1 ring-inset ring-[var(--line)]">
-      <h2 className="absolute left-[19px] top-[17px] text-lg font-bold">Cơ cấu tài chính</h2>
-      <p className="absolute left-[19px] top-[43px] text-xs text-[var(--muted)]">Số dư khả dụng và khoản tạm khóa</p>
-      <div
-        aria-label={`Cơ cấu: khả dụng ${availablePercent}%, tạm khóa ${heldPercent}%`}
-        className="absolute left-[61px] top-[81px] size-[150px] rounded-full"
-        role="img"
-        style={{ background: `conic-gradient(var(--accent) 0 ${availablePercent}%, var(--accent-soft) ${availablePercent}% 100%)` }}
-      />
-      <strong className="absolute left-[146px] top-[113px] w-12 text-center text-lg">{availablePercent}%</strong>
-      <strong className="absolute left-[78px] top-[177px] w-12 text-center text-lg">{heldPercent}%</strong>
-      <span className="absolute left-[257px] top-[95px] size-3 rounded-sm bg-[var(--accent)]" />
-      <p className="absolute left-[279px] top-[90px] text-[13px] font-medium">Số dư khả dụng</p>
-      <p className="absolute left-[279px] top-[111px] text-[13px] text-[var(--muted)]">{money(finance.availableBalanceVnd)} ({availablePercent}%)</p>
-      <span className="absolute left-[257px] top-[153px] size-3 rounded-sm border border-[var(--line)] bg-[var(--accent-soft)]" />
-      <p className="absolute left-[279px] top-[148px] text-[13px] font-medium">Tạm khóa đối soát</p>
-      <p className="absolute left-[279px] top-[169px] text-[13px] text-[var(--muted)]">{money(finance.heldBalanceVnd)} ({heldPercent}%)</p>
-      <p className="absolute left-[257px] top-[209px] text-[13px] font-bold">Tổng tài chính: {money(total)}</p>
+    <article className="flex min-h-[280px] min-w-0 flex-col justify-between rounded-xl p-5 ring-1 ring-inset ring-[var(--line)]">
+      <div>
+        <h2 className="text-lg font-bold">Cơ cấu tài chính</h2>
+        <p className="mt-0.5 text-xs text-[var(--muted)]">Số dư khả dụng và khoản tạm khóa</p>
+      </div>
+      <div className="mt-4 flex flex-col items-center gap-6 sm:flex-row">
+        <div
+          aria-label={`Cơ cấu: khả dụng ${availablePercent}%, tạm khóa ${heldPercent}%`}
+          className="relative grid size-[148px] shrink-0 place-items-center rounded-full"
+          role="img"
+          style={{ background: `conic-gradient(var(--accent) 0 ${availablePercent}%, var(--accent-soft) ${availablePercent}% 100%)` }}
+        >
+          <span className="grid size-[82px] place-items-center rounded-full bg-white text-center text-xs font-bold tabular-nums text-[var(--ink)] shadow-inner">
+            {availablePercent}% / {heldPercent}%
+          </span>
+        </div>
+        <div className="w-full min-w-0 space-y-3 text-sm">
+          <div className="flex items-start gap-2.5">
+            <span aria-hidden className="mt-1 size-3 shrink-0 rounded-sm bg-[var(--accent)]" />
+            <div className="min-w-0">
+              <p className="font-medium text-[var(--ink)]">Số dư khả dụng</p>
+              <p className="tabular-nums text-[var(--muted)]">{money(finance.availableBalanceVnd)} ({availablePercent}%)</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2.5">
+            <span aria-hidden className="mt-1 size-3 shrink-0 rounded-sm border border-[var(--line)] bg-[var(--accent-soft)]" />
+            <div className="min-w-0">
+              <p className="font-medium text-[var(--ink)]">Tạm khóa đối soát</p>
+              <p className="tabular-nums text-[var(--muted)]">{money(finance.heldBalanceVnd)} ({heldPercent}%)</p>
+            </div>
+          </div>
+          <p className="border-t border-[var(--line)] pt-2 font-bold tabular-nums text-[var(--ink)]">Tổng tài chính: {money(total)}</p>
+        </div>
+      </div>
     </article>
   );
 }

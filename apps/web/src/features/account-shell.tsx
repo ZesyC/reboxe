@@ -13,10 +13,17 @@ const accountNavItems = [
 ];
 
 function AccountNavItem({ active, href, label }: { active: boolean; href: string | undefined; label: string }) {
-  const className = `flex h-8 items-center gap-[11px] pl-0.5 text-[13px] ${active ? "text-[var(--accent)]" : "text-[var(--ink)]"}`;
-  const content = <><span className={`size-[7px] rounded-full ${active ? "bg-[var(--accent-header)]" : "bg-[var(--muted)]"}`} />{label}</>;
+  const className = `flex min-h-10 items-center gap-3 rounded-lg px-2 text-[13px] transition-colors ${active ? "bg-[var(--accent-soft)] font-semibold text-[var(--accent)]" : "text-[var(--ink)] hover:bg-white"}`;
+  const content = (
+    <>
+      <span aria-hidden className={`size-2 shrink-0 rounded-full ${active ? "bg-[var(--accent)]" : "bg-[var(--muted)]"}`} />
+      <span>{label}</span>
+    </>
+  );
 
-  return href ? <Link className={`${className} hover:text-[var(--accent)]`} href={href}>{content}</Link> : <span className={className}>{content}</span>;
+  return href
+    ? <Link aria-current={active ? "page" : undefined} className={className} href={href}>{content}</Link>
+    : <span className={className}>{content}</span>;
 }
 
 export function AccountShell({ activeHref, children, username = "Tài khoản", initials = "US" }: {
@@ -26,16 +33,19 @@ export function AccountShell({ activeHref, children, username = "Tài khoản", 
   initials?: string;
 }) {
   return (
-    <main className="min-h-[780px] bg-[var(--paper)] px-4 pb-20 pt-[18px] sm:px-6">
-      <div className="mx-auto flex w-full max-w-[960px] items-start max-md:flex-col">
-        <aside className="w-[190px] shrink-0 max-md:mb-4 max-md:w-full">
-          <div className="flex h-[68px] items-center gap-3">
-            <span className="grid size-12 place-items-center rounded-full bg-[var(--accent-soft)] text-sm font-bold text-[var(--accent)]">{initials}</span>
-            <div className="min-w-0"><strong className="block truncate text-[15px]">{username}</strong><Link className="mt-1 block text-xs text-[var(--muted)] hover:underline" href="/account/profile">Sửa hồ sơ</Link></div>
+    <main className="min-h-[780px] bg-[var(--paper)] px-4 pb-20 pt-5 sm:px-6">
+      <div className="mx-auto flex w-full max-w-[980px] items-start gap-6 max-md:flex-col">
+        <aside className="w-[210px] shrink-0 max-md:w-full">
+          <div className="flex min-h-[68px] items-center gap-3 pb-3">
+            <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[var(--accent-soft)] text-sm font-bold text-[var(--accent)]">{initials}</span>
+            <div className="min-w-0">
+              <strong className="block truncate text-[15px]">{username}</strong>
+              <Link className="mt-1 inline-flex min-h-8 items-center text-xs text-[var(--muted)] hover:text-[var(--accent)] hover:underline" href="/account/profile">Sửa hồ sơ</Link>
+            </div>
           </div>
           <div className="h-px bg-[var(--line)]" />
-          <strong className="block py-1 text-xs">TÀI KHOẢN CỦA TÔI</strong>
-          <nav aria-label="Tài khoản của tôi">
+          <p className="pb-1.5 pt-3 text-xs font-semibold text-[var(--muted)]">TÀI KHOẢN CỦA TÔI</p>
+          <nav aria-label="Tài khoản của tôi" className="grid gap-0.5 max-md:grid-cols-2 max-sm:grid-cols-1">
             {accountNavItems.map((item) => <AccountNavItem active={item.href === activeHref} href={item.href} key={item.label} label={item.label} />)}
           </nav>
         </aside>

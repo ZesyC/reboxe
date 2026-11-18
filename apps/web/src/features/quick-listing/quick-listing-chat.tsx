@@ -7,27 +7,24 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { createBrowserApiClient } from "../../platform/api/browser";
+import { conditionLabels } from "../commerce-data";
 import { coverFromVideo } from "./cover-from-video";
 
 const api = createBrowserApiClient();
 const allowedMedia = [...catalogImageMimeTypes, "video/mp4"];
 const money = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" });
-const conditions = {
-  NEW_SEALED: "Mới nguyên seal", LIKE_NEW_99: "Gần như mới", GOOD: "Còn tốt",
-  FAIR: "Đã qua sử dụng", DEFECT: "Có lỗi"
-};
 
 type ChatTurn = { message: string; file?: File | undefined; reply?: string | undefined };
 
 function AssistantBubble({ children }: { children: ReactNode }) {
   return (
     <div className="flex items-start gap-2.5 sm:gap-3">
-      <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-[11px] border border-[#dbe8fa] bg-white sm:size-9">
+      <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-[11px] border border-[var(--line)] bg-white sm:size-9">
         <Image alt="" height={19} src="/reboxe/logo.png" width={19} />
       </span>
       <div className="min-w-0 max-w-[calc(100%-2.625rem)] sm:max-w-[85%]">
-        <p className="mb-1.5 text-xs font-semibold text-[#506581]">Trợ lý REBOXE</p>
-        <div className="w-fit rounded-2xl rounded-tl-sm border border-[#e2eaf5] bg-white px-3.5 py-2.5 text-sm leading-6 sm:px-4">{children}</div>
+        <p className="mb-1.5 text-xs font-semibold text-[var(--muted)]">Trợ lý REBOXE</p>
+        <div className="w-fit rounded-2xl rounded-tl-sm border border-[var(--line)] bg-white px-3.5 py-2.5 text-sm leading-6 sm:px-4">{children}</div>
       </div>
     </div>
   );
@@ -43,8 +40,8 @@ function AttachmentPreview({ file, compact = false }: { file: File; compact?: bo
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
-  if (!source || (compact && isVideo)) return <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-[#e6eefb] text-[10px] font-bold text-[#345781]">{isVideo ? "MP4" : "ẢNH"}</span>;
-  if (isVideo) return <video aria-label={file.name} className="max-h-52 w-full rounded-xl bg-[#102845] sm:w-[290px]" controls preload="metadata" src={source} />;
+  if (!source || (compact && isVideo)) return <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-[var(--accent-soft)] text-xs font-bold text-[var(--accent-strong)]">{isVideo ? "MP4" : "ẢNH"}</span>;
+  if (isVideo) return <video aria-label={file.name} className="max-h-52 w-full rounded-xl bg-[var(--ink)] sm:w-[290px]" controls preload="metadata" src={source} />;
 
   return <Image alt={file.name} className={compact ? "size-10 shrink-0 rounded-lg object-cover" : "max-h-56 w-auto rounded-xl bg-white object-contain object-left"} height={compact ? 40 : 224} src={source} unoptimized width={compact ? 40 : 320} />;
 }
@@ -52,11 +49,11 @@ function AttachmentPreview({ file, compact = false }: { file: File; compact?: bo
 function SellerBubble({ turn }: { turn: ChatTurn }) {
   return (
     <div className="ml-auto grid w-fit max-w-[87%] justify-items-end gap-1.5 sm:max-w-[75%]">
-      {turn.file && <div className="max-w-full min-w-0 rounded-2xl rounded-br-sm border border-[#d2e5ff] bg-[#e4efff] p-1.5">
+      {turn.file && <div className="max-w-full min-w-0 rounded-2xl rounded-br-sm border border-[var(--line-strong)] bg-[var(--accent-soft)] p-1.5">
         <AttachmentPreview file={turn.file} />
-        <p className="max-w-60 truncate px-2 pb-0.5 pt-1.5 text-xs text-[#345781]" title={turn.file.name}>{turn.file.name}</p>
+        <p className="max-w-60 truncate px-2 pb-0.5 pt-1.5 text-xs text-[var(--accent-strong)]" title={turn.file.name}>{turn.file.name}</p>
       </div>}
-      {turn.message && <p className="min-w-0 whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-[#285b9f] px-4 py-2.5 text-sm leading-6 text-white">{turn.message}</p>}
+      {turn.message && <p className="min-w-0 whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-[var(--accent-strong)] px-4 py-2.5 text-sm leading-6 text-white">{turn.message}</p>}
     </div>
   );
 }
@@ -91,7 +88,10 @@ export function QuickListingChat({ shopId, categories }: { shopId: string; categ
   useEffect(() => {
     const thread = transcript.current;
     if (!thread) return;
-    const observer = new ResizeObserver(() => { thread.scrollTop = thread.scrollHeight; });
+    const observer = new ResizeObserver(() => {
+      const distanceFromBottom = thread.scrollHeight - thread.scrollTop - thread.clientHeight;
+      if (distanceFromBottom < 80) thread.scrollTop = thread.scrollHeight;
+    });
     observer.observe(thread);
     return () => observer.disconnect();
   }, []);
@@ -182,24 +182,24 @@ export function QuickListingChat({ shopId, categories }: { shopId: string; categ
   }
 
   return (
-    <section aria-labelledby="quick-listing-title" className="mx-auto flex h-full min-h-0 w-full max-w-[980px] flex-col overflow-hidden rounded-[20px] border border-[#dbe6f3] bg-white shadow-[0_10px_32px_#163d7210]">
-      <header className="flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-[#dbe6f3] px-3.5 py-3 sm:px-5 sm:py-3.5">
+    <section aria-labelledby="quick-listing-title" className="mx-auto flex h-full min-h-0 w-full max-w-[980px] flex-col overflow-hidden rounded-[20px] border border-[var(--line)] bg-white shadow-[0_10px_32px_rgba(16,40,69,0.06)]">
+      <header className="flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-[var(--line)] px-3.5 py-3 sm:px-5 sm:py-3.5">
         <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
-          <div aria-hidden className="grid size-10 shrink-0 place-items-center rounded-[13px] border border-[#d9e7fa] bg-[#edf4fe] sm:size-11">
+          <div aria-hidden className="grid size-10 shrink-0 place-items-center rounded-[13px] border border-[var(--line)] bg-[var(--accent-soft)] sm:size-11">
             <Image alt="" height={23} src="/reboxe/logo.png" width={23} />
           </div>
           <div>
             <h1 className="text-lg leading-tight font-bold sm:text-xl" id="quick-listing-title">Đăng nhanh</h1>
-            <p className="mt-0.5 text-xs text-[#526985]">Trợ lý đăng bán REBOXE</p>
+            <p className="mt-0.5 text-xs text-[var(--muted)]">Trợ lý đăng bán REBOXE</p>
           </div>
         </div>
         <div className="flex items-center gap-2 text-xs font-semibold sm:gap-3 sm:text-sm">
-          <Link className="rounded-lg px-1.5 py-2 text-[#456286] hover:bg-[#eef5fd] sm:px-2.5" href="/seller/products/new#listing-form">Đăng thủ công</Link>
-          {(turns.length > 0 || outcome) && <button className="rounded-lg border border-[#d6e5f7] bg-[#f0f6ff] px-2.5 py-1.5 text-[#244f8c] hover:bg-[#e4efff] disabled:opacity-50 sm:px-3" disabled={busy} onClick={reset} type="button">Tin mới</button>}
+          <Link className="inline-flex min-h-10 items-center rounded-lg px-2.5 py-2 text-[var(--muted)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]" href="/seller/products/new#listing-form">Đăng thủ công</Link>
+          {(turns.length > 0 || outcome) && <button className="min-h-10 rounded-lg border border-[var(--line-strong)] bg-[var(--accent-soft)] px-3 py-1.5 text-[var(--accent-strong)] hover:bg-[var(--line)] disabled:opacity-50" disabled={busy} onClick={reset} type="button">Tin mới</button>}
         </div>
       </header>
 
-      <div aria-label="Cuộc trò chuyện" className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-[#f4f8fe]" ref={transcript} role="log">
+      <div aria-label="Cuộc trò chuyện" className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-[var(--paper)]" ref={transcript} role="log">
         <div className="mx-auto grid max-w-[760px] gap-5 p-3.5 sm:gap-6 sm:px-7 sm:py-6">
           <AssistantBubble>
             <p>Bạn muốn bán món gì? Gửi một ảnh hoặc video kèm vài dòng về món đồ và giá bạn muốn bán nhé.</p>
@@ -212,53 +212,60 @@ export function QuickListingChat({ shopId, categories }: { shopId: string; categ
           ))}
           {pendingTurn && <>
             <SellerBubble turn={pendingTurn} />
-            <AssistantBubble><p className="text-[#526985]" role="status">Đang đọc tin nhắn…</p></AssistantBubble>
+            <AssistantBubble><p className="text-[var(--muted)]" role="status">Đang đọc tin nhắn…</p></AssistantBubble>
           </>}
           {!pendingTurn && preview.success && <AssistantBubble>
-            <h2 className="text-sm font-bold text-[#244f8c]">Xem trước tin đăng</h2>
-            <div className="mt-2 rounded-xl border border-[#e0eaf7] bg-[#f7faff] px-3 py-2.5">
+            <h2 className="text-sm font-bold text-[var(--accent-strong)]">Xem trước tin đăng</h2>
+            <div className="mt-2 rounded-xl border border-[var(--line)] bg-[var(--paper)] px-3 py-2.5">
               <div className="flex min-w-0 items-center gap-2.5">
                 {file && <AttachmentPreview compact file={file} />}
                 <div className="min-w-0">
                   <p className="font-bold break-words">{preview.data.title}</p>
-                  <p className="text-base font-bold text-[#285b9f]">{money.format(preview.data.price)}</p>
+                  <p className="text-base font-bold tabular-nums text-[var(--accent)]">{money.format(preview.data.price)}</p>
                 </div>
               </div>
-              <p className="mt-1 text-xs leading-5 text-[#526985]">{categories.find(category => category.id === preview.data.categoryId)?.name ?? preview.data.categoryId} · {conditions[preview.data.conditionGrade]} · {preview.data.weightGram} g</p>
+              <p className="mt-1 text-xs leading-5 text-[var(--muted)]">{categories.find(category => category.id === preview.data.categoryId)?.name ?? preview.data.categoryId} · {conditionLabels[preview.data.conditionGrade]} · {preview.data.weightGram} g</p>
               <p className="mt-1 whitespace-pre-wrap break-words">{preview.data.conditionNotes}</p>
               {preview.data.description && <p className="mt-1 whitespace-pre-wrap break-words">{preview.data.description}</p>}
             </div>
             {!outcome && <div className="mt-3 flex flex-wrap items-center gap-2.5">
-              <button className="rounded-lg bg-[#285b9f] px-3.5 py-1.5 text-sm font-bold text-white hover:bg-[#204b87] disabled:bg-[#e2ebf8] disabled:text-[#556d8d]" disabled={Boolean(busy || !file || message.trim() || selectedFile)} onClick={() => void publish()} type="button">{publishing ? "Đang đăng…" : "Đăng bán"}</button>
-              {!file && <p className="text-xs text-[#526985]">Gửi ảnh hoặc video để đăng bán.</p>}
-              {listingId && <Link className="text-xs font-semibold text-[#285b9f]" href={`/seller/products/new?edit=${encodeURIComponent(listingId)}#listing-form`}>Mở bản nháp</Link>}
+              <button className="min-h-10 rounded-lg bg-[var(--accent-strong)] px-4 py-2 text-sm font-bold text-white hover:bg-[var(--ink)] disabled:bg-[var(--accent-soft)] disabled:text-[var(--muted)]" disabled={Boolean(busy || !file || message.trim() || selectedFile)} onClick={() => void publish()} type="button">{publishing ? "Đang đăng…" : "Đăng bán"}</button>
+              {!file && <p className="text-xs text-[var(--muted)]">Gửi ảnh hoặc video để đăng bán.</p>}
+              {listingId && <Link className="inline-flex min-h-10 items-center text-xs font-semibold text-[var(--accent)] hover:underline" href={`/seller/products/new?edit=${encodeURIComponent(listingId)}#listing-form`}>Mở bản nháp</Link>}
             </div>}
           </AssistantBubble>}
           {error && <p className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-sm text-amber-900" role="alert">{error}</p>}
-          {outcome && <AssistantBubble><p className="font-semibold text-[#087855]" role="status">{outcome === "ACTIVE" ? "Sản phẩm đã được đăng bán." : "Sản phẩm đã được gửi duyệt."}</p></AssistantBubble>}
-          {turnLimitReached && !preview.success && <AssistantBubble><p>Bạn có thể <Link className="font-semibold text-[#285b9f] underline" href="/seller/products/new#listing-form">điền phần còn lại trong form đăng thủ công</Link>.</p></AssistantBubble>}
+          {outcome && <AssistantBubble><p className="font-semibold text-[var(--success)]" role="status">{outcome === "ACTIVE" ? "Sản phẩm đã được đăng bán." : "Sản phẩm đã được gửi duyệt."}</p></AssistantBubble>}
+          {turnLimitReached && !preview.success && <AssistantBubble><p>Bạn có thể <Link className="font-semibold text-[var(--accent)] underline" href="/seller/products/new#listing-form">điền phần còn lại trong form đăng thủ công</Link>.</p></AssistantBubble>}
         </div>
       </div>
 
-      {!outcome && <form className="shrink-0 border-t border-[#dbe6f3] bg-white p-2.5 sm:px-5 sm:py-3" onSubmit={event => void send(event)}>
+      {!outcome && <form className="shrink-0 border-t border-[var(--line)] bg-white p-2.5 sm:px-5 sm:py-3" onSubmit={event => void send(event)}>
         <div className="mx-auto max-w-[760px]">
-          {selectedFile && !pendingTurn && <div className="mb-2 flex w-fit max-w-full items-center gap-2 rounded-xl border border-[#dce8f9] bg-[#f5f9ff] p-1.5 pr-2.5">
+          {selectedFile && !pendingTurn && <div className="mb-2 flex w-fit max-w-full items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--accent-soft)] p-1.5 pr-2">
             <AttachmentPreview compact file={selectedFile} />
-            <span className="truncate text-xs font-semibold text-[#3c5678]" title={selectedFile.name}>{selectedFile.name}</span>
-            <button aria-label="Bỏ tệp đính kèm" className="grid size-7 shrink-0 place-items-center rounded-full text-lg leading-none text-[#3c5678] hover:bg-[#e7effb]" onClick={clearSelection} type="button">×</button>
+            <span className="truncate text-xs font-semibold text-[var(--accent-strong)]" title={selectedFile.name}>{selectedFile.name}</span>
+            <button aria-label="Bỏ tệp đính kèm" className="grid size-10 shrink-0 place-items-center rounded-full text-[var(--accent-strong)] hover:bg-[var(--line)]" onClick={clearSelection} type="button">
+              <svg aria-hidden fill="none" height="16" stroke="currentColor" strokeLinecap="round" strokeWidth="2" viewBox="0 0 16 16" width="16"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+            </button>
           </div>}
-          <div className="flex items-end gap-1.5 rounded-[16px] border border-[#ccdef5] bg-[#f8fbff] p-1.5 focus-within:border-[#6c9ad1] sm:gap-2 sm:p-2">
+          <div className="flex items-end gap-1.5 rounded-[16px] border border-[var(--line-strong)] bg-[var(--paper)] p-1.5 focus-within:border-[var(--accent)] focus-within:ring-2 focus-within:ring-[var(--accent-soft)] sm:gap-2 sm:p-2" data-focus-ring-parent>
             <input accept={allowedMedia.join(",")} hidden onChange={event => selectMedia(event.target.files?.[0])} ref={fileInput} type="file" />
-            <button aria-label="Đính kèm ảnh hoặc video" className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#e8f1ff] text-xl leading-none font-semibold text-[#285b9f] hover:bg-[#dbeaff] disabled:opacity-50" disabled={busy} onClick={() => fileInput.current?.click()} title="Đính kèm ảnh hoặc video" type="button"><span aria-hidden>＋</span></button>
-            <textarea aria-label="Tin nhắn đăng bán" className="max-h-28 min-h-10 min-w-0 flex-1 resize-none bg-transparent px-1 py-2 text-base leading-6 [field-sizing:content] placeholder:text-[#657c99] disabled:opacity-65 sm:text-sm" disabled={Boolean(busy || requestKey || turnLimitReached)} maxLength={maxQuickListingMessageLength} onChange={event => setMessage(event.target.value)} onKeyDown={event => {
+            <button aria-label="Đính kèm ảnh hoặc video" className="grid size-11 shrink-0 place-items-center rounded-xl bg-[var(--accent-soft)] text-[var(--accent-strong)] hover:bg-[var(--line)] disabled:opacity-50" disabled={busy} onClick={() => fileInput.current?.click()} title="Đính kèm ảnh hoặc video" type="button">
+              <svg aria-hidden fill="none" height="20" stroke="currentColor" strokeLinecap="round" strokeWidth="2" viewBox="0 0 20 20" width="20"><path d="M10 4v12M4 10h12" /></svg>
+            </button>
+            <textarea aria-label="Tin nhắn đăng bán" className="max-h-28 min-h-11 min-w-0 flex-1 resize-none bg-transparent px-1 py-2 text-base leading-6 [field-sizing:content] disabled:opacity-65 sm:text-sm" disabled={Boolean(busy || requestKey || turnLimitReached)} maxLength={maxQuickListingMessageLength} onChange={event => setMessage(event.target.value)} onKeyDown={event => {
               if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing && window.matchMedia("(pointer: fine)").matches) {
                 event.preventDefault();
                 event.currentTarget.form?.requestSubmit();
               }
             }} placeholder="Nhắn về món bạn muốn bán…" ref={composer} rows={1} value={message} />
-            <button className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-[#285b9f] px-3.5 text-sm font-bold text-white hover:bg-[#204b87] disabled:bg-[#e1eafa] disabled:text-[#556d8d]" disabled={!canSend} type="submit">Gửi <span aria-hidden>↑</span></button>
+            <button className="flex h-11 shrink-0 items-center gap-1.5 rounded-xl bg-[var(--accent-strong)] px-4 text-sm font-bold text-white hover:bg-[var(--ink)] disabled:bg-[var(--accent-soft)] disabled:text-[var(--muted)]" disabled={!canSend} type="submit">
+              Gửi
+              <svg aria-hidden fill="none" height="16" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 16 16" width="16"><path d="M8 13V3M3.5 7.5L8 3l4.5 4.5" /></svg>
+            </button>
           </div>
-          {turns.length === 0 && !pendingTurn && <button className="mt-1.5 px-1 text-xs font-semibold text-[#285b9f] hover:underline" onClick={() => {
+          {turns.length === 0 && !pendingTurn && <button className="mt-1.5 inline-flex min-h-9 items-center px-1 text-xs font-semibold text-[var(--accent)] hover:underline" onClick={() => {
             setMessage("Mình pass đầm hoa size M giá 140k, mặc vài lần, khóa kéo hơi xước.");
             composer.current?.focus();
           }} type="button">Dùng câu mẫu</button>}

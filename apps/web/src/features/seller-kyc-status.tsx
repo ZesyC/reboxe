@@ -36,21 +36,21 @@ export function SellerKycStatus() {
   }, []);
   useEffect(() => { void reload(); }, [reload]);
 
-  return <section className="mx-auto max-w-2xl space-y-5 rounded-xl border border-[var(--line)] bg-white p-6">
-    <h1 className="text-2xl font-bold">Trạng thái xác minh</h1>
-    {loading ? <p role="status">Đang tải hồ sơ…</p> : error ? <p role="alert">{error}</p> : shop ? <>
-      <h2 className="font-bold">{shop.displayName}</h2>
-      <p role="status">{messages[status?.kycStatus ?? shop.kycStatus]}</p>
-      {status?.review ? <div className="space-y-2 border-l-4 border-[var(--accent)] pl-4">
+  return <section className="mx-auto max-w-2xl space-y-5 rounded-xl border border-[var(--line)] bg-white p-5 sm:p-6">
+    <h1 className="text-2xl font-bold text-balance">Trạng thái xác minh</h1>
+    {loading ? <p className="text-sm text-[var(--muted)]" role="status">Đang tải hồ sơ…</p> : error ? <p className="text-sm font-medium text-[var(--danger)]" role="alert">{error}</p> : shop ? <>
+      <h2 className="text-lg font-bold">{shop.displayName}</h2>
+      <p className="text-sm leading-6" role="status">{messages[status?.kycStatus ?? shop.kycStatus]}</p>
+      {status?.review ? <div className="space-y-2 rounded-lg border border-[var(--line)] bg-[var(--paper)] p-4 text-sm leading-6">
         <p className="whitespace-pre-wrap"><strong>Lý do: </strong>{status.review.reason}</p>
-        <p>Thời điểm duyệt: {new Date(status.review.reviewedAt).toLocaleString("vi-VN")}</p>
+        <p className="text-[var(--muted)]">Thời điểm duyệt: {new Date(status.review.reviewedAt).toLocaleString("vi-VN")}</p>
       </div> : null}
-      {shop.kycId ? <p className="break-all text-sm text-[var(--muted)]">Mã hồ sơ: {shop.kycId}</p> : null}
-    </> : <p>Chưa có hồ sơ shop thuộc quyền sở hữu của bạn.</p>}
-    <div className="flex flex-wrap gap-5">
-      <button type="button" disabled={loading} onClick={() => void reload()} className="font-bold text-[var(--accent)] disabled:opacity-50">Cập nhật trạng thái</button>
-      <Link href="/seller/inventory" className="underline">Về kho hàng</Link>
-      {error ? <Link href="/login" className="underline">Đăng nhập</Link> : null}
+      {shop.kycId ? <p className="break-all text-xs text-[var(--muted)]">Mã hồ sơ: {shop.kycId}</p> : null}
+    </> : <p className="text-sm text-[var(--muted)]">Chưa có hồ sơ shop thuộc quyền sở hữu của bạn.</p>}
+    <div className="flex flex-wrap items-center gap-4 text-sm">
+      <button type="button" disabled={loading} onClick={() => void reload()} className="inline-flex min-h-11 items-center rounded-lg border border-[var(--line-strong)] px-4 py-2 font-bold text-[var(--accent)] hover:bg-[var(--paper)] disabled:opacity-50">Cập nhật trạng thái</button>
+      <Link href="/seller/inventory" className="inline-flex min-h-11 items-center font-semibold underline">Về kho hàng</Link>
+      {error ? <Link href="/login" className="inline-flex min-h-11 items-center rounded-lg bg-[var(--accent)] px-4 py-2 font-bold text-white hover:bg-[var(--accent-strong)]">Đăng nhập</Link> : null}
     </div>
   </section>;
 }

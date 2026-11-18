@@ -221,9 +221,9 @@ export function AddProductWorkbench() {
         <h2 className="text-xl font-black tracking-tight">Nhập bản kê hàng hoàn</h2>
         <p className="mt-1 text-sm leading-6 text-[var(--muted)]">Chọn một nguồn. Cả hai nguồn dùng chung màn xem trước khi tạo kiện.</p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <Link className="rounded-xl border border-[var(--line-strong)] px-5 py-4 text-left font-bold text-[var(--accent)]" href="/seller/connections">Kết nối Shopee/TikTok <span className="block text-xs font-semibold">Quản lý quyền truy cập shop</span></Link>
+          <Link className="min-h-11 rounded-xl border border-[var(--line-strong)] px-5 py-4 text-left font-bold text-[var(--accent)] transition-colors hover:bg-[var(--paper)]" href="/seller/connections">Kết nối Shopee/TikTok <span className="block text-xs font-semibold">Quản lý quyền truy cập shop</span></Link>
           <button
-            className="rounded-xl bg-[var(--accent)] px-5 py-4 text-left font-bold text-white disabled:opacity-60"
+            className="min-h-11 rounded-xl bg-[var(--accent)] px-5 py-4 text-left font-bold text-white transition-colors hover:bg-[var(--accent-strong)] disabled:opacity-60"
             disabled={action === "preview-manifest"}
             onClick={() => manifestFileInput.current?.click()}
             type="button"
@@ -289,9 +289,9 @@ export function AddProductWorkbench() {
         <h2 className="text-xl font-black">Quét hoặc chọn kiện để đăng bán</h2>
         <p className="mt-2 text-sm text-[var(--muted)]">Quét mã của kiện đã nhập vào kho. Mỗi kiện tạo đúng một bản nháp để bạn kiểm tra trước khi đăng bán.</p>
         <PackageScanner onCode={setScanCode} />
-        <form className="mt-4 flex gap-3" onSubmit={scanPackage}>
-          <input aria-label="Mã kiện" className="min-w-0 flex-1 rounded-xl border border-[var(--line-strong)] px-4" onChange={(event) => setScanCode(event.target.value)} placeholder="Nhập mã tracking đã import" value={scanCode} />
-          <button className="rounded-xl bg-[var(--accent)] px-5 py-3 font-bold text-white disabled:opacity-50" disabled={action === "scan-package" || !scanCode.trim()}>Tạo bản nháp</button>
+        <form className="mt-4 flex flex-col gap-3 sm:flex-row" onSubmit={scanPackage}>
+          <input aria-label="Mã kiện" className="min-h-11 min-w-0 flex-1 rounded-xl border border-[var(--line-strong)] px-4 py-2.5" onChange={(event) => setScanCode(event.target.value)} placeholder="Nhập mã kiện hàng đã import" value={scanCode} />
+          <button className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)] px-5 py-3 font-bold text-white hover:bg-[var(--accent-strong)] disabled:opacity-50" disabled={action === "scan-package" || !scanCode.trim()} type="submit">Tạo bản nháp</button>
         </form>
         {manifestCommitted ? <button className="mt-3 rounded-xl border border-[var(--accent)] px-5 py-3 font-bold text-[var(--accent)] disabled:opacity-50" disabled={action === "batch-package"} onClick={() => void createAllPackageDrafts()} type="button">Tạo bản nháp cho cả {committedPackageIds.length} kiện</button> : null}
       </section>
@@ -311,7 +311,7 @@ export function AddProductWorkbench() {
           <div className="grid gap-2 text-sm font-bold">
             <label htmlFor="categoryId">Danh mục *</label>
             <select
-              className="rounded-xl border border-[var(--line-strong)] bg-white px-4 py-3.5 font-normal transition-colors hover:border-slate-400 disabled:bg-slate-100"
+              className="rounded-xl border border-[var(--line-strong)] bg-white py-3.5 pl-4 pr-10 font-normal transition-colors hover:border-slate-400 disabled:bg-slate-100"
               defaultValue={editingListing?.categoryId ?? ""}
               disabled={categoriesLoading || categoriesError || categories.length === 0}
               id="categoryId"
@@ -339,7 +339,7 @@ export function AddProductWorkbench() {
 
           <label className="grid gap-2 text-sm font-bold" htmlFor="conditionGrade">
             Tình trạng *
-            <select className="rounded-xl border border-[var(--line-strong)] bg-white px-4 py-3.5 font-normal transition-colors hover:border-slate-400" defaultValue={editingListing?.conditionGrade ?? "NEW_SEALED"} id="conditionGrade" name="conditionGrade">
+            <select className="rounded-xl border border-[var(--line-strong)] bg-white py-3.5 pl-4 pr-10 font-normal transition-colors hover:border-slate-400" defaultValue={editingListing?.conditionGrade ?? "NEW_SEALED"} id="conditionGrade" name="conditionGrade">
               <option value="NEW_SEALED">Mới nguyên seal</option>
               <option value="LIKE_NEW_99">Gần như mới</option>
               <option value="GOOD">Còn tốt</option>
@@ -369,15 +369,15 @@ export function AddProductWorkbench() {
           </label>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-[var(--line)] bg-slate-50/70 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+        <div className="flex flex-col gap-3 border-t border-[var(--line)] bg-[var(--paper)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
           <p className="text-sm leading-6 text-[var(--muted)]">Bạn có thể chỉnh sửa bản nháp trước khi đăng bán.</p>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             {editingListing ? (
-              <Link className="inline-flex items-center rounded-xl border border-[var(--line-strong)] bg-white px-5 py-3 font-bold text-[var(--ink)]" href="/seller/products/new">
+              <Link className="inline-flex min-h-11 items-center rounded-xl border border-[var(--line-strong)] bg-white px-5 py-3 font-bold text-[var(--ink)] hover:bg-[var(--paper)]" href="/seller/products/new">
                 Hủy chỉnh sửa
               </Link>
             ) : null}
-            <button className="rounded-xl bg-[var(--accent)] px-6 py-3 font-bold text-white shadow-[0_7px_16px_rgba(25,104,238,0.2)] transition-transform active:translate-y-px disabled:opacity-60" disabled={action === "create-listing" || action === `update-${editingListing?.id}`}>
+            <button className="inline-flex min-h-11 items-center rounded-xl bg-[var(--accent)] px-6 py-3 font-bold text-white shadow-[0_7px_16px_rgba(25,104,238,0.2)] transition hover:bg-[var(--accent-strong)] active:translate-y-px disabled:opacity-60" disabled={action === "create-listing" || action === `update-${editingListing?.id}`} type="submit">
               {action === "create-listing" || action === `update-${editingListing?.id}` ? "Đang lưu..." : editingListing ? "Lưu thay đổi" : "Lưu bản nháp"}
             </button>
           </div>

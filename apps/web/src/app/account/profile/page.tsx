@@ -119,44 +119,64 @@ export default function ProfilePage() {
 
   return (
     <AccountShell activeHref="/account/profile" initials={initials} username={profile.username}>
-      <section className="h-[574px] w-[780px] max-w-full overflow-hidden border border-[var(--line)] bg-white px-[30px] py-5 md:-ml-5">
-        <h1 className="text-xl font-normal">Hồ sơ của tôi</h1>
-        <div className="mt-[10px] h-px bg-[var(--line)]" />
-        {loading ? <p className="mt-6 text-sm text-[var(--muted)]">Đang tải hồ sơ...</p> : (
-          <form className="flex h-[430px] w-full items-start" onSubmit={saveProfile}>
-            <div className="flex h-[420px] min-w-0 flex-1 flex-col gap-1.5 pt-2 text-[13px]">
-              {error ? <p className="rounded bg-red-50 px-3 py-2 text-red-700" role="alert">{error}</p> : null}
-              {notice ? <p className="rounded bg-emerald-50 px-3 py-2 text-emerald-700" role="status">{notice}</p> : null}
+      <section className="min-w-0 flex-1 rounded-lg border border-[var(--line)] bg-white px-5 py-6 sm:px-[30px]">
+        <h1 className="text-xl font-semibold text-[var(--ink)]">Hồ sơ của tôi</h1>
+        <div className="mt-3 h-px bg-[var(--line)]" />
+        {loading ? <p className="mt-6 text-sm text-[var(--muted)]" role="status">Đang tải hồ sơ...</p> : (
+          <form className="mt-5 grid gap-8 md:grid-cols-[1fr_220px] md:items-start" onSubmit={saveProfile}>
+            <div className="flex flex-col items-center gap-3 border-b border-[var(--line)] pb-6 md:order-2 md:border-b-0 md:border-l md:pb-0 md:pl-6">
+              <div className="relative grid size-[100px] place-items-center overflow-hidden rounded-full bg-[var(--accent-soft)] text-[26px] font-bold text-[var(--accent)]">
+                {avatarPreview || profile.avatarUrl ? <Image alt="Ảnh đại diện" className="object-cover" fill sizes="100px" src={avatarPreview || profile.avatarUrl} unoptimized /> : initials}
+              </div>
+              <label className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-md border border-[var(--line-strong)] bg-white px-4 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--paper)]">
+                Chọn ảnh
+                <input accept="image/jpeg,image/png" className="sr-only" type="file" onChange={(event) => selectAvatar(event.target.files?.[0])} />
+              </label>
+              <p className="text-center text-xs leading-5 text-[var(--muted)]">Dung lượng tối đa 1 MB<br />Định dạng: JPEG, PNG</p>
+            </div>
+
+            <div className="flex min-w-0 flex-col gap-3 text-sm md:order-1">
+              {error ? <p className="rounded-md bg-red-50 px-3 py-2 text-red-700" role="alert">{error}</p> : null}
+              {notice ? <p className="rounded-md bg-emerald-50 px-3 py-2 text-emerald-800" role="status">{notice}</p> : null}
               <ProfileRow label="Tên đăng nhập"><strong className="font-medium">{profile.username}</strong></ProfileRow>
               <ProfileRow label="Tên">
-                <input aria-label="Tên" className="h-10 w-[340px] max-w-full border border-[var(--line)] bg-white px-3.5 text-sm" maxLength={120} required value={profile.fullName} onChange={(event) => setProfile((current) => ({ ...current, fullName: event.target.value }))} />
+                <input
+                  aria-label="Tên"
+                  className="min-h-11 w-full max-w-[340px] rounded-md border border-[var(--line-strong)] bg-white px-3.5 text-sm"
+                  maxLength={120}
+                  onChange={(event) => setProfile((current) => ({ ...current, fullName: event.target.value }))}
+                  required
+                  value={profile.fullName}
+                />
               </ProfileRow>
-              <ProfileRow label="Email"><span className="text-[var(--accent)]">{profile.email || "Thêm"}</span></ProfileRow>
+              <ProfileRow label="Email"><span className="break-all text-[var(--accent)]">{profile.email || "Thêm"}</span></ProfileRow>
               <ProfileRow label="Số điện thoại"><span className="text-[var(--accent)]">{maskPhone(profile.phone) || "Chưa thêm"}</span></ProfileRow>
               <ProfileRow label="Giới tính">
                 <div className="flex flex-wrap items-center gap-4 text-sm">
                   {["Nam", "Nữ", "Khác"].map((gender) => (
-                    <label className="flex items-center gap-1.5" key={gender}>
-                      <input checked={profile.gender.toLocaleLowerCase("vi") === gender.toLocaleLowerCase("vi")} name="gender" onChange={() => setProfile((current) => ({ ...current, gender }))} type="radio" />
+                    <label className="inline-flex min-h-10 cursor-pointer items-center gap-2" key={gender}>
+                      <input
+                        checked={profile.gender.toLocaleLowerCase("vi") === gender.toLocaleLowerCase("vi")}
+                        className="size-4 accent-[var(--accent)]"
+                        name="gender"
+                        onChange={() => setProfile((current) => ({ ...current, gender }))}
+                        type="radio"
+                      />
                       {gender}
                     </label>
                   ))}
                 </div>
               </ProfileRow>
               <ProfileRow label="Ngày sinh"><span className="text-[var(--accent)]">{profile.birthday || "Chưa thêm"}</span></ProfileRow>
-              <div className="flex h-[46px] items-center pl-[138px]">
-                <button className="h-10 w-[70px] bg-[var(--accent-header)] text-sm font-bold text-white disabled:opacity-60" disabled={saving} type="submit">{saving ? "LƯU…" : "LƯU"}</button>
+              <div className="pt-2 sm:pl-[138px]">
+                <button
+                  className="min-h-11 rounded-md bg-[var(--accent)] px-6 text-sm font-bold text-white hover:bg-[var(--accent-strong)] disabled:opacity-60"
+                  disabled={saving}
+                  type="submit"
+                >
+                  {saving ? "LƯU…" : "LƯU"}
+                </button>
               </div>
-            </div>
-            <div className="flex h-[420px] w-[220px] shrink-0 flex-col items-center justify-center gap-3 border-l border-[var(--line)] pt-2 max-md:hidden">
-              <div className="relative grid size-[100px] place-items-center overflow-hidden rounded-full bg-[var(--accent-soft)] text-[26px] font-bold text-[var(--accent)]">
-                {avatarPreview || profile.avatarUrl ? <Image alt="Ảnh đại diện" className="object-cover" fill sizes="100px" src={avatarPreview || profile.avatarUrl} unoptimized /> : initials}
-              </div>
-              <label className="grid h-10 w-[105px] cursor-pointer place-items-center border border-[var(--line)] bg-white text-sm font-bold">
-                Chọn ảnh
-                <input accept="image/jpeg,image/png" className="sr-only" type="file" onChange={(event) => selectAvatar(event.target.files?.[0])} />
-              </label>
-              <p className="w-[180px] text-center text-[11px] leading-4 text-[var(--muted)]">Dung lượng tối đa 1 MB<br />Định dạng: JPEG, PNG</p>
             </div>
           </form>
         )}
@@ -166,7 +186,12 @@ export default function ProfilePage() {
 }
 
 function ProfileRow({ children, label }: { children: ReactNode; label: string }) {
-  return <div className="flex min-h-11 items-center gap-[18px]"><span className="w-[120px] shrink-0 text-right text-[var(--muted)]">{label}</span><div className="min-w-0">{children}</div></div>;
+  return (
+    <div className="flex flex-col gap-1 sm:min-h-11 sm:flex-row sm:items-center sm:gap-[18px]">
+      <span className="text-[var(--muted)] sm:w-[120px] sm:shrink-0 sm:text-right">{label}</span>
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  );
 }
 
 function metadataString(metadata: Record<string, unknown>, key: string): string {

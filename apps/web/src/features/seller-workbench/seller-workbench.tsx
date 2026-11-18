@@ -5,6 +5,7 @@ import { maxCatalogImageBytes, maxCatalogImages, type ActorContext, type Listing
 import Link from "next/link";
 import { useCallback, useEffect, useState, type ChangeEvent } from "react";
 import { createBrowserApiClient } from "../../platform/api/browser";
+import { conditionLabels, nameInitials } from "../commerce-data";
 
 const api = createBrowserApiClient();
 
@@ -18,14 +19,6 @@ const statusLabels: Record<Listing["status"], string> = {
   RELISTABLE: "Hoàn hàng",
   SUSPENDED: "Tạm ngưng",
   DELISTED: "Đã gỡ"
-};
-
-const conditionLabels: Record<Listing["conditionGrade"], string> = {
-  NEW_SEALED: "Mới nguyên seal",
-  LIKE_NEW_99: "Gần như mới",
-  GOOD: "Còn tốt",
-  FAIR: "Đã qua sử dụng",
-  DEFECT: "Có lỗi"
 };
 
 const listingStatusDescriptions: Record<Listing["status"], string> = {
@@ -77,10 +70,6 @@ const packageStatus: Record<SellerInventoryPackage["status"], Pick<InventoryItem
 
 function listingStock(status: Listing["status"]): 0 | 1 {
   return status === "RESERVED" || status === "SOLD" || status === "DELISTED" ? 0 : 1;
-}
-
-function initials(title: string): string {
-  return title.trim().split(/\s+/).slice(0, 2).map((word) => word[0]).join("").toUpperCase();
 }
 
 export function SellerWorkbench() {
@@ -268,113 +257,161 @@ export function SellerWorkbench() {
       : left.createdAt.localeCompare(right.createdAt));
 
   return (
-    <div className="grid gap-6 xl:h-full xl:min-h-0">
-      <section id="inventory" className="flex min-h-[calc(100vh-100px)] flex-col overflow-hidden rounded-xl border border-[var(--line)] bg-white p-5 xl:h-full xl:min-h-0">
+    <div className="grid min-w-0 gap-6 xl:h-full xl:min-h-0">
+      <section id="inventory" className="flex min-h-[420px] min-w-0 flex-col overflow-hidden rounded-xl border border-[var(--line)] bg-white p-4 sm:p-5 xl:h-full xl:min-h-0">
         <h1 className="text-[22px] font-bold leading-normal text-[var(--ink)]">Quản Lý Kho Hàng REBOXE</h1>
 
-        <div className="mt-1 flex h-11 items-end gap-1 overflow-x-auto border-b border-[var(--line)]" aria-label="Lọc trạng thái kho hàng">
+        <div className="mt-1 flex min-h-11 flex-wrap items-end gap-x-1 gap-y-2 border-b border-[var(--line)]" aria-label="Lọc trạng thái kho hàng">
           {([
             ["all", "Tất cả"],
             ["active", `Đang bán (${activeCount})`],
-            ["claims", "Khiếu nại (0)"],
             ["sold", `Đã bán (${soldCount})`]
           ] as const).map(([value, label]) => (
             <button
               aria-pressed={statusFilter === value}
-              className={`flex h-11 shrink-0 flex-col items-center justify-end gap-2 px-3 text-[13px] font-medium ${statusFilter === value ? "font-bold text-[var(--accent)]" : "text-[var(--ink)]"} ${value === "claims" ? "cursor-not-allowed opacity-50" : ""}`}
-              disabled={value === "claims"}
+              className={`flex min-h-11 shrink-0 flex-col items-center justify-end gap-2 px-3 text-[13px] font-medium ${statusFilter === value ? "font-bold text-[var(--accent)]" : "text-[var(--ink)] hover:text-[var(--accent)]"}`}
               key={value}
               onClick={() => setStatusFilter(value)}
               type="button"
             >
               {label}
-              <span className={`h-0.5 rounded-sm ${statusFilter === value ? "w-9 bg-[var(--accent)]" : "w-9"}`} />
+              <span className={`h-0.5 w-9 rounded-sm ${statusFilter === value ? "bg-[var(--accent)]" : "bg-transparent"}`} />
             </button>
           ))}
+          <Link className="ml-auto inline-flex min-h-11 shrink-0 items-center px-3 text-[13px] font-medium text-[var(--muted)] hover:text-[var(--accent)] max-sm:ml-0" href="/seller/returns">
+            Khiếu nại / Hoàn trả
+          </Link>
         </div>
 
         <div className="grid gap-2 py-3 text-xs">
-          <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap">
-            <span className="w-[120px] shrink-0 font-medium">Trạng thái</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="w-[80px] shrink-0 font-semibold text-[var(--muted)] sm:w-[100px]">Trạng thái</span>
             {([
               ["all", "Tất cả"],
               ["active", `Đang bán (${activeCount})`],
               ["sold", `Đã bán (${soldCount})`]
             ] as const).map(([value, label]) => (
-              <button className={`rounded-full border px-3 py-1.5 font-medium ${statusFilter === value ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]" : "border-[var(--line)] text-[var(--muted)]"}`} key={value} onClick={() => setStatusFilter(value)} type="button">{label}</button>
+              <button
+                className={`min-h-9 rounded-full border px-3.5 py-1.5 font-medium ${statusFilter === value ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]" : "border-[var(--line)] text-[var(--muted)] hover:bg-[var(--paper)]"}`}
+                key={value}
+                onClick={() => setStatusFilter(value)}
+                type="button"
+              >
+                {label}
+              </button>
             ))}
           </div>
-          <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap">
-            <span className="w-[120px] shrink-0 font-medium">Tồn kho</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="w-[80px] shrink-0 font-semibold text-[var(--muted)] sm:w-[100px]">Tồn kho</span>
             {([
               ["all", "Tất cả"],
               ["in-stock", `Còn hàng (${inStockCount})`],
               ["out-of-stock", `Hết hàng (${outOfStockCount})`]
             ] as const).map(([value, label]) => (
-              <button className={`rounded-full border px-3 py-1.5 font-medium ${stockFilter === value ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]" : "border-[var(--line)] text-[var(--muted)]"}`} key={value} onClick={() => setStockFilter(value)} type="button">{label}</button>
+              <button
+                className={`min-h-9 rounded-full border px-3.5 py-1.5 font-medium ${stockFilter === value ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]" : "border-[var(--line)] text-[var(--muted)] hover:bg-[var(--paper)]"}`}
+                key={value}
+                onClick={() => setStockFilter(value)}
+                type="button"
+              >
+                {label}
+              </button>
             ))}
           </div>
         </div>
 
         <form className="flex flex-wrap items-center gap-2 pb-3" onSubmit={(event) => { event.preventDefault(); setSearchTerm(searchInput); }} role="search">
-          <select aria-label="Loại tìm kiếm" className="h-[34px] w-[150px] rounded-sm border border-[var(--line)] bg-white px-3 text-xs" onChange={(event) => setSearchType(event.target.value as "order" | "product")} value={searchType}>
+          <select aria-label="Loại tìm kiếm" className="h-10 w-full rounded-md border border-[var(--line-strong)] bg-white pl-3 pr-10 text-xs sm:w-[164px]" onChange={(event) => setSearchType(event.target.value as "order" | "product")} value={searchType}>
             <option value="order">Mã đơn hàng</option>
             <option value="product">Tên sản phẩm</option>
           </select>
-          <input aria-label="Nhập tên sản phẩm hoặc mã đơn" className="h-[34px] min-w-[220px] flex-1 rounded-sm border border-[var(--line)] px-3 text-xs" onChange={(event) => setSearchInput(event.target.value)} placeholder="Nhập tên sản phẩm" type="search" value={searchInput} />
-          <span className="flex h-[34px] items-center rounded-sm border border-[var(--line)] px-3 text-xs">Đơn vị vận chuyển: REBOXE</span>
-          <button className="h-[34px] rounded-sm bg-[var(--accent)] px-4 text-xs font-medium text-white">Áp dụng</button>
-          <button className="h-[34px] rounded-sm border border-[var(--line)] bg-white px-4 text-xs text-[var(--accent)]" onClick={() => { setSearchInput(""); setSearchTerm(""); setStatusFilter("all"); setStockFilter("all"); }} type="button">Đặt lại</button>
+          <input aria-label="Nhập tên sản phẩm hoặc mã đơn" className="h-10 min-w-[160px] flex-1 rounded-md border border-[var(--line-strong)] px-3 text-xs sm:min-w-[200px]" onChange={(event) => setSearchInput(event.target.value)} placeholder="Nhập tên sản phẩm" type="search" value={searchInput} />
+          <button className="min-h-10 rounded-md bg-[var(--accent)] px-4 text-xs font-semibold text-white hover:bg-[var(--accent-strong)]" type="submit">Áp dụng</button>
+          <button className="min-h-10 rounded-md border border-[var(--line-strong)] bg-white px-4 text-xs font-medium text-[var(--accent)] hover:bg-[var(--paper)]" onClick={() => { setSearchInput(""); setSearchTerm(""); setStatusFilter("all"); setStockFilter("all"); }} type="button">Đặt lại</button>
         </form>
 
-        <div className="flex items-center justify-between gap-3 pb-3">
-          <strong className="text-[13px]">{filteredItems.length} Kiện hàng</strong>
-          <select aria-label="Sắp xếp kho hàng" className="h-8 rounded-sm border border-[var(--line)] bg-white px-3 text-[11px] text-[var(--muted)]" onChange={(event) => setSortOrder(event.target.value as "newest" | "oldest")} value={sortOrder}>
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3">
+          <strong className="text-[13px] tabular-nums">{filteredItems.length} Kiện hàng</strong>
+          <select aria-label="Sắp xếp kho hàng" className="h-9 rounded-md border border-[var(--line-strong)] bg-white pl-3 pr-10 text-xs text-[var(--muted)]" onChange={(event) => setSortOrder(event.target.value as "newest" | "oldest")} value={sortOrder}>
             <option value="newest">Sắp xếp theo: Mới nhất</option>
             <option value="oldest">Sắp xếp theo: Cũ nhất</option>
           </select>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-x-auto overflow-y-hidden" role="table" aria-label="Danh sách kho hàng">
-          <div className="grid min-w-[920px] grid-cols-[minmax(320px,1fr)_170px_120px_230px_152px] rounded-t-[5px] bg-[var(--paper)] px-3 py-2 text-[11px] text-[var(--muted)]" role="row">
+        <div className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto sm:overflow-x-auto sm:overflow-y-hidden" role="table" aria-label="Danh sách kho hàng">
+          <div className="hidden rounded-t-md bg-[var(--paper)] px-3 py-2.5 text-xs font-medium text-[var(--muted)] sm:grid sm:min-w-[920px] sm:grid-cols-[minmax(320px,1fr)_170px_120px_230px_152px]" role="row">
             <span role="columnheader">Sản phẩm</span><span role="columnheader">Giá xả kho</span><span role="columnheader">Tồn kho</span><span role="columnheader">Trạng thái</span><span role="columnheader">Thao tác</span>
           </div>
-          <div className="mt-2 flex min-h-0 min-w-[920px] flex-1 flex-col gap-2 overflow-y-auto overscroll-contain" role="rowgroup">
+          <div className="mt-2 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain sm:min-w-[920px]" role="rowgroup">
             {filteredItems.length === 0 ? (
-              <div className="grid flex-1 place-items-center rounded-[5px] border border-[var(--line)] text-center" role="row">
-                <div role="cell"><p className="font-bold">Không có kiện hàng phù hợp</p><p className="mt-1 text-xs text-[var(--muted)]">Thử đổi bộ lọc hoặc tạo sản phẩm mới ở mục Thêm Sản Phẩm.</p></div>
+              <div className="grid flex-1 place-items-center rounded-md border border-[var(--line)] p-6 text-center" role="row">
+                <div aria-colspan={5} role="cell">
+                  <p className="font-bold">Không có kiện hàng phù hợp</p>
+                  <p className="mt-1 text-xs text-[var(--muted)]">Thử đổi bộ lọc hoặc tạo sản phẩm mới ở mục Thêm Sản Phẩm.</p>
+                </div>
               </div>
             ) : filteredItems.map((item) => (
-              <article className="min-w-[920px] shrink-0 overflow-hidden rounded-[5px] border border-[var(--line)]" key={`${item.listing ? "listing" : "package"}-${item.id}`} role="row">
-                <div className="flex h-[30px] items-center justify-between bg-[var(--paper)] px-3 text-[11px] text-[var(--muted)]">
-                  <span className="flex items-center gap-2 font-medium"><span className="grid size-[18px] place-items-center rounded-full bg-[var(--accent-soft)] text-[9px] font-bold text-[var(--accent)]">R</span>{item.sourceLabel}</span>
-                  <span>Mã đơn hàng: {item.orderRef}</span>
+              <article className="shrink-0 overflow-hidden rounded-md border border-[var(--line)] sm:min-w-[920px]" key={`${item.listing ? "listing" : "package"}-${item.id}`}>
+                <div className="flex min-h-8 flex-wrap items-center justify-between gap-x-2 gap-y-1 bg-[var(--paper)] px-3 py-1.5 text-xs text-[var(--muted)]">
+                  <span className="flex items-center gap-2 font-medium">
+                    <span className="grid size-5 place-items-center rounded-full bg-[var(--accent-soft)] text-xs font-bold text-[var(--accent)]">R</span>
+                    {item.sourceLabel}
+                  </span>
+                  <span className="max-w-full truncate tabular-nums">Mã: {item.orderRef}</span>
                 </div>
-                <div className="grid h-[76px] grid-cols-[minmax(320px,1fr)_170px_120px_230px_152px] items-center text-xs">
-                  <div className="flex min-w-0 items-center gap-2.5 pl-3" role="cell">
-                    {item.imageUrl ? <img alt="" className="size-[46px] shrink-0 rounded-[5px] object-cover" height={46} src={item.imageUrl} width={46} /> : <span className="grid size-[46px] shrink-0 place-items-center rounded-[5px] bg-[var(--accent-soft)] text-[11px] font-bold text-[var(--accent)]">{initials(item.title)}</span>}
-                    <span className="min-w-0"><strong className="block truncate text-[13px]">{item.title}</strong><span className="mt-1 block truncate text-[11px] text-[var(--muted)]">{item.subtitle}</span></span>
+                <div className="grid grid-cols-2 gap-3 p-3 text-xs sm:min-h-[76px] sm:grid-cols-[minmax(320px,1fr)_170px_120px_230px_152px] sm:items-center sm:gap-0 sm:px-0 sm:py-2" role="row">
+                  <div className="col-span-2 flex min-w-0 items-center gap-2.5 sm:col-span-1 sm:pl-3" role="cell">
+                    {item.imageUrl ? (
+                      <img alt="" className="size-[46px] shrink-0 rounded-md object-cover" decoding="async" height={46} loading="lazy" src={item.imageUrl} width={46} />
+                    ) : (
+                      <span className="grid size-[46px] shrink-0 place-items-center rounded-md bg-[var(--accent-soft)] text-xs font-bold text-[var(--accent)]">{nameInitials(item.title, "RB")}</span>
+                    )}
+                    <span className="min-w-0">
+                      <strong className="block truncate text-[13px]">{item.title}</strong>
+                      <span className="mt-1 block truncate text-xs text-[var(--muted)]">{item.subtitle}</span>
+                    </span>
                   </div>
-                  <div className="pl-3 tabular-nums" role="cell"><strong className="block text-[13px]">{item.price.toLocaleString("vi-VN")}đ</strong><span className="text-[10px] text-[var(--muted)]">Giá xả kho</span></div>
-                  <div className="pl-3 tabular-nums" role="cell"><strong className="block text-[13px]">{item.stock}</strong><span className="text-[10px] text-[var(--muted)]">Tồn kho</span></div>
-                  <div className="pl-3" role="cell"><span className={`inline-flex rounded-full px-2.5 py-1.5 text-[11px] font-bold ${item.statusTone}`}>{item.statusLabel}</span><span className="mt-1 block text-[10px] text-[var(--muted)]">{item.statusDescription}</span></div>
-                  <div className="flex items-center gap-2 pl-3" role="cell">
-                    {item.listing?.status === "DRAFT" ? <><label className={`cursor-pointer text-xs font-medium ${action === `upload-${item.id}` || item.listing.images.length >= maxCatalogImages ? "pointer-events-none opacity-50" : ""}`}>{action === `upload-${item.id}` ? "Đang tải..." : "Thêm ảnh"}<input accept="image/jpeg,image/png,image/webp" aria-label={`Thêm ảnh cho ${item.title}`} className="sr-only" disabled={action === `upload-${item.id}` || item.listing.images.length >= maxCatalogImages} multiple onChange={(event) => void uploadImages(item.listing!, event)} type="file" /></label><Link className="text-xs font-medium" href={`/seller/products/new?edit=${item.id}`}>Chỉnh sửa</Link><button className="text-xs font-medium text-[var(--accent)] disabled:opacity-50" disabled={action === `publish-${item.id}`} onClick={() => void publish(item.id)} type="button">{action === `publish-${item.id}` ? "Đang đăng..." : "Đăng bán"}</button></> : item.listing?.status === "ACTIVE" ? <Link className="font-medium text-[var(--accent)]" href={`/listings/${item.id}`}>Xem công khai</Link> : item.statusGroup === "sold" ? <Link className="font-medium text-[var(--accent)]" href="/seller/finance">Đối soát</Link> : <span className="font-medium text-[var(--muted)]">{item.listing ? "Chờ xử lý" : "Chuẩn bị bán"}</span>}
+                  <div className="tabular-nums sm:pl-3" role="cell">
+                    <strong className="block text-[13px]">{item.price.toLocaleString("vi-VN")}đ</strong>
+                    <span className="text-xs text-[var(--muted)]">Giá xả kho</span>
+                  </div>
+                  <div className="tabular-nums sm:pl-3" role="cell">
+                    <strong className="block text-[13px]">{item.stock}</strong>
+                    <span className="text-xs text-[var(--muted)]">Tồn kho</span>
+                  </div>
+                  <div className="col-span-2 sm:col-span-1 sm:pl-3" role="cell">
+                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${item.statusTone}`}>{item.statusLabel}</span>
+                    <span className="mt-1 block text-xs text-[var(--muted)]">{item.statusDescription}</span>
+                  </div>
+                  <div className="col-span-2 flex flex-wrap items-center gap-2 border-t border-[var(--line)] pt-2 sm:col-span-1 sm:border-t-0 sm:pl-3 sm:pt-0" role="cell">
+                    {item.listing?.status === "DRAFT" ? (
+                      <>
+                        <label className={`inline-flex min-h-9 cursor-pointer items-center text-xs font-semibold hover:underline ${action === `upload-${item.id}` || item.listing.images.length >= maxCatalogImages ? "pointer-events-none opacity-50" : ""}`}>
+                          {action === `upload-${item.id}` ? "Đang tải..." : "Thêm ảnh"}
+                          <input accept="image/jpeg,image/png,image/webp" aria-label={`Thêm ảnh cho ${item.title}`} className="sr-only" disabled={action === `upload-${item.id}` || item.listing.images.length >= maxCatalogImages} multiple onChange={(event) => void uploadImages(item.listing!, event)} type="file" />
+                        </label>
+                        <Link className="inline-flex min-h-9 items-center text-xs font-semibold hover:underline" href={`/seller/products/new?edit=${item.id}`}>Chỉnh sửa</Link>
+                        <button className="inline-flex min-h-9 items-center text-xs font-semibold text-[var(--accent)] hover:underline disabled:opacity-50" disabled={action === `publish-${item.id}`} onClick={() => void publish(item.id)} type="button">
+                          {action === `publish-${item.id}` ? "Đang đăng..." : "Đăng bán"}
+                        </button>
+                      </>
+                    ) : item.listing?.status === "ACTIVE" ? (
+                      <Link className="inline-flex min-h-9 items-center font-semibold text-[var(--accent)] hover:underline" href={`/listings/${item.id}`}>Xem công khai</Link>
+                    ) : item.statusGroup === "sold" ? (
+                      <Link className="inline-flex min-h-9 items-center font-semibold text-[var(--accent)] hover:underline" href="/seller/finance">Đối soát</Link>
+                    ) : (
+                      <span className="font-medium text-[var(--muted)]">{item.listing ? "Chờ xử lý" : "Chuẩn bị bán"}</span>
+                    )}
                   </div>
                 </div>
               </article>
             ))}
           </div>
         </div>
-
-        <div className="mt-4 flex h-8 items-center justify-end gap-1.5 text-[11px] text-[var(--muted)]"><span>Trang 1 / 1</span><button className="grid size-6 place-items-center rounded-sm border border-[var(--line)] opacity-45" disabled type="button">‹</button><span className="grid size-6 place-items-center rounded-sm bg-[var(--accent)] text-white">1</span><button className="grid size-6 place-items-center rounded-sm border border-[var(--line)] opacity-45" disabled type="button">›</button></div>
       </section>
 
-
-
-      {error ? <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800" role="alert">{error}</p> : null}
-      {success ? <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800" role="status">{success}</p> : null}
-
+      {error ? <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900" role="alert">{error}</p> : null}
+      {success ? <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-900" role="status">{success}</p> : null}
     </div>
   );
 }

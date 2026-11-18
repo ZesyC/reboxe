@@ -82,29 +82,31 @@ export function MarketplaceConnections() {
     } catch (caught) { setError(caught instanceof Error ? caught.message : "Không thể ngắt kết nối."); }
     finally { setBusy(false); }
   }
-  return <section className="space-y-5 rounded-xl bg-white p-6">
-    <h1 className="text-2xl font-bold">Kết nối nguồn hàng</h1>
-    <p>Liên kết shop để chuẩn bị nhập dữ liệu hàng hoàn. Bạn tự đăng nhập và cấp quyền trên trang chính thức của sàn.</p>
-    <div className="rounded-lg border p-4 text-sm leading-6">
-      <p>REBOXE sử dụng mã đơn, mã kiện, tên, phân loại, ảnh, số lượng và giá nguồn để hỗ trợ tạo bản nháp. Dữ liệu người mua trên sàn gốc không được công khai. Bạn vẫn kiểm tra và xác nhận trước khi đăng bán.</p>
-      <p className="mt-2">Bạn có thể ngắt kết nối tại đây. Thông tin truy cập được mã hóa ở hệ thống; REBOXE không yêu cầu bạn gửi mật khẩu hoặc OTP cho nhân viên.</p>
-      <label className="mt-3 flex items-start gap-2"><input checked={consent} onChange={(event) => setConsent(event.target.checked)} type="checkbox" /><span>Tôi đồng ý kết nối theo thông báo phiên bản {marketplaceNoticeVersion}.</span></label>
+  return <section className="space-y-5">
+    <div className="space-y-4 rounded-xl border border-[var(--line)] bg-white p-5 sm:p-6">
+      <h1 className="text-2xl font-bold text-balance">Kết nối nguồn hàng</h1>
+      <p className="text-sm leading-6 text-[var(--muted)]">Liên kết shop để chuẩn bị nhập dữ liệu hàng hoàn. Bạn tự đăng nhập và cấp quyền trên trang chính thức của sàn.</p>
+      <div className="space-y-2 border-t border-[var(--line)] pt-4 text-sm leading-6">
+        <p>REBOXE sử dụng mã đơn, mã kiện, tên, phân loại, ảnh, số lượng và giá nguồn để hỗ trợ tạo bản nháp. Dữ liệu người mua trên sàn gốc không được công khai. Bạn vẫn kiểm tra và xác nhận trước khi đăng bán.</p>
+        <p>Bạn có thể ngắt kết nối tại đây. Thông tin truy cập được mã hóa ở hệ thống; REBOXE không yêu cầu bạn gửi mật khẩu hoặc OTP cho nhân&nbsp;viên.</p>
+        <label className="mt-2 flex min-h-11 cursor-pointer items-center gap-2.5"><input checked={consent} className="size-4 shrink-0" onChange={(event) => setConsent(event.target.checked)} type="checkbox" /><span>Tôi đồng ý kết nối theo thông báo phiên bản {marketplaceNoticeVersion}.</span></label>
+      </div>
+      {error ? <p className="text-sm font-medium text-[var(--danger)]" role="alert">{error}</p> : null}
+      {notice ? <p className="text-sm font-medium text-[var(--success)]" role="status">{notice}</p> : null}
     </div>
-    {error ? <p role="alert" className="text-red-700">{error}</p> : null}
-    {notice ? <p role="status" className="text-emerald-700">{notice}</p> : null}
-    {loading ? <p>Đang tải...</p> : availability.map(({ platform, configured }) => {
+    {loading ? <p className="rounded-xl border border-[var(--line)] bg-white p-5 text-sm text-[var(--muted)]" role="status">Đang tải...</p> : availability.map(({ platform, configured }) => {
       const connection = connections.find((item) => item.platform === platform);
-      return <article className="rounded-lg border p-4" key={platform}>
+      return <article className="rounded-xl border border-[var(--line)] bg-white p-5 sm:p-6" key={platform}>
         <h2 className="text-lg font-bold">{platformNames[platform]}</h2>
-        {connection ? <p className="mt-2">{connection.shopName} · {labels[connection.status]}</p> : <p className="mt-2">Chưa kết nối</p>}
+        {connection ? <p className="mt-2 text-sm">{connection.shopName} · {labels[connection.status]}</p> : <p className="mt-2 text-sm text-[var(--muted)]">Chưa kết nối</p>}
         {!configured ? <p className="mt-2 text-sm text-[var(--muted)]">Kênh này chưa được cấu hình. Bạn có thể nhập bản kê CSV/Excel.</p> : null}
-        <div className="mt-3 flex gap-3">
-          <button className="rounded bg-[var(--accent)] px-4 py-2 text-white disabled:opacity-50" disabled={!consent || !configured || busy || !shopId} onClick={() => void connect(platform)} type="button">{connection?.status === "CONNECTED" ? "Đổi kết nối" : "Kết nối shop"}</button>
-          {connection && connection.status !== "DISCONNECTED" ? <button className="rounded border px-4 py-2 disabled:opacity-50" disabled={busy} onClick={() => void disconnect(platform)} type="button">Ngắt kết nối</button> : null}
+        <div className="mt-4 flex flex-wrap gap-3">
+          <button className="inline-flex min-h-11 items-center rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-bold text-white hover:bg-[var(--accent-strong)] disabled:opacity-50" disabled={!consent || !configured || busy || !shopId} onClick={() => void connect(platform)} type="button">{connection?.status === "CONNECTED" ? "Đổi kết nối" : "Kết nối shop"}</button>
+          {connection && connection.status !== "DISCONNECTED" ? <button className="inline-flex min-h-11 items-center rounded-lg border border-[var(--line-strong)] px-4 py-2 text-sm font-semibold hover:bg-[var(--paper)] disabled:opacity-50" disabled={busy} onClick={() => void disconnect(platform)} type="button">Ngắt kết nối</button> : null}
         </div>
       </article>;
     })}
-    {selection ? <section className="rounded-lg border p-4"><h2 className="font-bold">Chọn shop vừa cấp quyền</h2>{selection.shops.map((shop) => <button className="m-2 rounded border px-4 py-2 disabled:opacity-50" disabled={busy} key={shop.id} onClick={() => void confirm(shop.id)} type="button">{shop.name}</button>)}</section> : null}
-    <div className="flex flex-wrap gap-4 text-[var(--accent)]"><Link href="/seller/products/new">Nhập bản kê CSV/Excel</Link><Link href="/support">Nhờ REBOXE hướng dẫn kết nối</Link></div>
+    {selection ? <section className="rounded-xl border border-[var(--line)] bg-white p-5 sm:p-6"><h2 className="font-bold">Chọn shop vừa cấp quyền</h2><div className="mt-3 flex flex-wrap gap-3">{selection.shops.map((shop) => <button className="inline-flex min-h-11 items-center rounded-lg border border-[var(--line-strong)] px-4 py-2 text-sm font-semibold hover:bg-[var(--paper)] disabled:opacity-50" disabled={busy} key={shop.id} onClick={() => void confirm(shop.id)} type="button">{shop.name}</button>)}</div></section> : null}
+    <div className="flex flex-wrap gap-4 text-sm font-semibold text-[var(--accent)]"><Link className="inline-flex min-h-11 items-center underline" href="/seller/products/new">Nhập bản kê CSV/Excel</Link><Link className="inline-flex min-h-11 items-center underline" href="/support">Nhờ REBOXE hướng dẫn kết nối</Link></div>
   </section>;
 }

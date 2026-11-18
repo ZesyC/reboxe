@@ -194,10 +194,14 @@ export function SellerOnboarding() {
           <p className="mt-2 text-sm text-[var(--muted)]">Tài khoản buyer vẫn được giữ nguyên. Shop chỉ được tạo sau khi hoàn thành bước cuối.</p>
         </div>
 
-        <ol className="mb-6 grid grid-cols-5 gap-2" aria-label="Tiến trình đăng ký seller">
+        <ol className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-5" aria-label="Tiến trình đăng ký seller">
           {steps.map((label, index) => (
-            <li className={`rounded-xl px-2 py-3 text-center text-xs font-bold ${index === step ? "bg-[var(--accent)] text-white" : index < step ? "bg-emerald-50 text-emerald-700" : "bg-white text-[var(--muted)]"}`} key={label}>
-              <span className="block text-[11px] opacity-80">Bước {index + 1}</span>{label}
+            <li
+              aria-current={index === step ? "step" : undefined}
+              className={`rounded-xl px-2.5 py-3 text-center text-xs font-bold ${index === step ? "bg-[var(--accent)] text-white" : index < step ? "bg-emerald-50 text-emerald-800" : "bg-white text-[var(--muted)]"}`}
+              key={label}
+            >
+              <span className="block text-xs opacity-90">Bước {index + 1}</span>{label}
             </li>
           ))}
         </ol>
@@ -309,7 +313,7 @@ export function SellerOnboarding() {
   );
 }
 
-const inputClass = "w-full rounded-xl border border-[var(--line-strong)] bg-white px-4 py-3 text-sm outline-none read-only:bg-slate-50";
+const inputClass = "min-h-11 w-full rounded-xl border border-[var(--line-strong)] bg-white px-4 py-3 text-sm read-only:bg-slate-50";
 
 function StepTitle({ number, title }: { number: number; title: string }) {
   return <div><p className="text-sm font-bold text-[var(--accent)]">Bước {number}/5</p><h2 className="mt-1 text-2xl font-black">{title}</h2></div>;

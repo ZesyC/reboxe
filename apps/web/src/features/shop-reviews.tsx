@@ -21,6 +21,7 @@ export function ShopReviews({ shopId }: { shopId: string }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    let active = true;
     setRating(5);
     setContent("");
     setEditing(false);
@@ -38,6 +39,8 @@ export function ShopReviews({ shopId }: { shopId: string }) {
         throw cause;
       })
     ]).then(([items, mine, result]) => {
+      if (!active) return;
+      setError("");
       setReviews(items);
       setEligibility(result);
       if (mine) {
@@ -45,7 +48,12 @@ export function ShopReviews({ shopId }: { shopId: string }) {
         setContent(mine.content);
         setEditing(true);
       }
-    }).catch(() => setError("Không thể tải đánh giá của shop.")).finally(() => setLoading(false));
+    }).catch(() => {
+      if (active) setError("Không thể tải đánh giá của shop.");
+    }).finally(() => {
+      if (active) setLoading(false);
+    });
+    return () => { active = false; };
   }, [shopId]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -73,44 +81,47 @@ export function ShopReviews({ shopId }: { shopId: string }) {
   }
 
   return (
-    <section className="mt-6 rounded-[10px] border border-[var(--line)] bg-white p-6">
-      <h2 className="text-lg font-medium">ĐÁNH GIÁ SHOP</h2>
+    <section className="mt-6 rounded-[10px] border border-[var(--line)] bg-white p-5 sm:p-6">
+      <h2 className="text-lg font-semibold">ĐÁNH GIÁ SHOP</h2>
       {eligibility?.eligible ? <form className="mt-4 grid gap-3 border-b border-[var(--line)] pb-6" onSubmit={submit}>
         <div aria-label="Số sao" className="flex gap-1" role="group">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
               aria-label={`${star} sao`}
               aria-pressed={rating === star}
-              className={`text-2xl ${star <= rating ? "text-amber-500" : "text-slate-300"}`}
+              className={`grid size-11 place-items-center rounded-md text-2xl transition-colors hover:bg-[var(--paper)] ${star <= rating ? "text-amber-500" : "text-slate-400"}`}
               key={star}
               onClick={() => setRating(star)}
               type="button"
             >★</button>
           ))}
         </div>
-        <textarea
-          className="min-h-24 rounded-md border border-[var(--line)] p-3 text-sm outline-none focus:border-[var(--accent)]"
-          maxLength={1000}
-          minLength={3}
-          onChange={(event) => setContent(event.target.value)}
-          placeholder="Chia sẻ trải nghiệm của bạn về shop"
-          required
-          value={content}
-        />
+        <label className="grid gap-1.5 text-sm font-medium text-[var(--ink)]">
+          <span>Nhận xét của bạn</span>
+          <textarea
+            className="min-h-24 rounded-md border border-[var(--line-strong)] p-3 text-sm font-normal focus:border-[var(--accent)]"
+            maxLength={1000}
+            minLength={3}
+            onChange={(event) => setContent(event.target.value)}
+            placeholder="Chia sẻ trải nghiệm của bạn về shop"
+            required
+            value={content}
+          />
+        </label>
         <div className="flex items-center gap-3">
-          <button className="rounded-md bg-[var(--accent-strong)] px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60" disabled={saving} type="submit">
+          <button className="min-h-11 rounded-md bg-[var(--accent-strong)] px-5 py-2.5 text-sm font-medium text-white hover:bg-[var(--ink)] disabled:opacity-60" disabled={saving} type="submit">
             {saving ? "Đang lưu..." : editing ? "Cập nhật đánh giá" : "Gửi đánh giá"}
           </button>
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
+          {error ? <p className="text-sm text-red-700" role="alert">{error}</p> : null}
         </div>
       </form> : eligibility === null
-        ? <p className="mt-4 border-b border-[var(--line)] pb-6 text-sm">Bạn cần <Link className="text-[var(--accent)] underline" href="/login">đăng nhập</Link> để đánh giá shop.</p>
+        ? <p className="mt-4 border-b border-[var(--line)] pb-6 text-sm">Bạn cần <Link className="font-medium text-[var(--accent)] underline" href="/login">đăng nhập</Link> để đánh giá shop.</p>
         : eligibility?.reason === "SHOP_MEMBER"
           ? <p className="mt-4 border-b border-[var(--line)] pb-6 text-sm">Thành viên không thể tự đánh giá shop của mình.</p>
           : eligibility?.reason === "COMPLETED_ORDER_REQUIRED"
             ? <p className="mt-4 border-b border-[var(--line)] pb-6 text-sm">Bạn cần hoàn thành một đơn hàng từ shop này để đánh giá.</p>
             : null}
-      {error && !eligibility?.eligible ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
+      {error && !eligibility?.eligible ? <p className="mt-4 text-sm text-red-700" role="alert">{error}</p> : null}
 
       <div className="mt-5 grid gap-4">
         {loading ? <p className="text-sm text-[var(--muted)]">Đang tải đánh giá...</p>

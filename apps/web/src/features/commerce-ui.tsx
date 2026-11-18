@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 
 export function ReboxeBadge({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <span className={`inline-flex items-center justify-center rounded bg-[var(--accent-soft)] text-[11px] font-medium text-[var(--accent)] ${className}`}>
+    <span className={`inline-flex items-center justify-center rounded bg-[var(--accent-soft)] px-2.5 py-1 text-xs font-semibold text-[var(--accent)] ${className}`}>
       {children}
     </span>
   );
@@ -27,7 +27,7 @@ export function ProductVisual({
       style={gradient ? ({ backgroundImage: gradient } as CSSProperties) : undefined}
     >
       {src ? (
-        <img alt={label} className="size-full object-cover" src={src} />
+        <img alt={label} className="size-full object-cover" decoding="async" loading="lazy" src={src} />
       ) : (
         <strong className={`font-bold leading-5 ${labelClassName}`}>{label}</strong>
       )}
