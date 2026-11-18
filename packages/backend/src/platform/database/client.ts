@@ -10,6 +10,14 @@ export type DatabaseContext = {
 };
 
 export function createDatabase(databaseUrl: string): DatabaseContext {
-  const pool = new Pool({ connectionString: databaseUrl });
+  const ca = process.env.DATABASE_CA_CERT?.trim();
+  const url = ca ? new URL(databaseUrl) : undefined;
+  if (url) {
+    for (const key of ["ssl", "sslmode", "sslcert", "sslkey", "sslrootcert"]) url.searchParams.delete(key);
+  }
+  const pool = new Pool({
+    connectionString: url?.toString() ?? databaseUrl,
+    ...(ca && { ssl: { ca, rejectUnauthorized: true } })
+  });
   return { pool, db: drizzle({ client: pool, schema }) };
 }

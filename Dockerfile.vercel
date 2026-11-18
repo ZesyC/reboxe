@@ -1,0 +1,35 @@
+FROM node:24.11.1-bookworm-slim AS workspace
+
+WORKDIR /app
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+COPY apps/api/package.json apps/api/nest-cli.json apps/api/tsconfig.json ./apps/api/
+COPY apps/worker/package.json apps/worker/nest-cli.json apps/worker/tsconfig.json ./apps/worker/
+COPY apps/web/package.json ./apps/web/
+COPY packages/api-client/package.json ./packages/api-client/
+COPY packages/backend/package.json packages/backend/tsconfig.json ./packages/backend/
+COPY packages/core/package.json ./packages/core/
+COPY packages/shared/package.json packages/shared/tsconfig.json ./packages/shared/
+COPY packages/ui-tokens/package.json ./packages/ui-tokens/
+
+FROM workspace AS build
+RUN CI=true pnpm install --frozen-lockfile
+COPY apps/api/src ./apps/api/src
+COPY apps/worker/src ./apps/worker/src
+COPY packages/backend/src ./packages/backend/src
+COPY packages/shared/src ./packages/shared/src
+RUN pnpm --filter @reboxe/api... --filter @reboxe/worker... build
+
+FROM workspace AS runtime
+RUN CI=true pnpm install --prod --frozen-lockfile
+COPY --from=build /app/apps/api/dist ./apps/api/dist
+COPY --from=build /app/apps/worker/dist ./apps/worker/dist
+COPY --from=build /app/packages/backend/dist ./packages/backend/dist
+COPY --from=build /app/packages/shared/dist ./packages/shared/dist
+
+ENV NODE_ENV=production
+ENV PORT=3001
+USER node
+EXPOSE 3001
+CMD ["node", "apps/api/dist/main.js"]
