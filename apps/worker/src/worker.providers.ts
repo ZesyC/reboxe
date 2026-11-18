@@ -13,9 +13,9 @@ export const workerProviders: Provider[] = [
   {
     provide: MARKETPLACE, inject: [DATABASE],
     useFactory: (database: DatabaseContext) => {
-      const secret = process.env.MARKETPLACE_TOKEN_ENCRYPTION_KEY ?? process.env.SELLER_PII_ENCRYPTION_KEY;
+      const secret = process.env.MARKETPLACE_TOKEN_ENCRYPTION_KEY || process.env.SELLER_PII_ENCRYPTION_KEY;
       if (!secret && process.env.NODE_ENV === "production") throw new Error("Marketplace token encryption secret is required");
-      return new MarketplaceModule(database.pool, secret ?? "local-dev-only-marketplace-secret-change-before-production", createMarketplaceProviders());
+      return new MarketplaceModule(database.pool, secret || "local-dev-only-marketplace-secret-change-before-production", createMarketplaceProviders());
     }
   },
   {

@@ -596,11 +596,29 @@ export class InventoryModule {
     }
   }
 
-  async createDraft(actorId: string, shopId: string, input: CreateListingInput): Promise<Listing> {
+  async createDraft(actorId: string, shopId: string, input: CreateListingInput, idempotencyKey?: string): Promise<Listing> {
     const client = await this.pool.connect();
     try {
       await client.query("BEGIN");
       const access = await this.identity.requireShopCapability(client, actorId, shopId, "CREATE_LISTING");
+      const requestHash = idempotencyKey && createHash("sha256").update(JSON.stringify({ shopId, input })).digest("hex");
+      if (idempotencyKey) {
+        await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`listing-draft:${actorId}:${idempotencyKey}`]);
+        const previous = await client.query<{ request_hash: string; response: { listingId: string } }>(
+          `SELECT request_hash, response FROM idempotency_records
+           WHERE actor_id = $1 AND scope = 'inventory.create-draft' AND idempotency_key = $2`,
+          [actorId, idempotencyKey]
+        );
+        const record = previous.rows[0];
+        if (record) {
+          if (record.request_hash !== requestHash) {
+            throw new DomainError("IDEMPOTENCY_CONFLICT", 409, "The key was used for another draft");
+          }
+          const listing = await this.selectOwnedListing(client, record.response.listingId, shopId);
+          await client.query("COMMIT");
+          return listing;
+        }
+      }
       await this.requireActiveCategory(client, input.categoryId);
       const listingId = `RBX-${ulid()}`;
       await client.query(
@@ -621,6 +639,13 @@ export class InventoryModule {
         ]
       );
       const listing = await this.selectOwnedListing(client, listingId, shopId);
+      if (idempotencyKey) {
+        await client.query(
+          `INSERT INTO idempotency_records (actor_id, scope, idempotency_key, request_hash, response)
+           VALUES ($1, 'inventory.create-draft', $2, $3, $4::jsonb)`,
+          [actorId, idempotencyKey, requestHash, JSON.stringify({ listingId })]
+        );
+      }
       await client.query("COMMIT");
       return { ...listing, shopDisplayName: access.displayName };
     } catch (error) {
@@ -691,8 +716,18 @@ export class InventoryModule {
     }
   }
 
-  async listCategories(): Promise<Category[]> {
-    const result = await this.pool.query<Category>(
+  async listListingCategoriesForShop(actorId: string, shopId: string): Promise<Category[]> {
+    const client = await this.pool.connect();
+    try {
+      await this.identity.requireShopCapability(client, actorId, shopId, "CREATE_LISTING");
+      return await this.listCategories(client);
+    } finally {
+      client.release();
+    }
+  }
+
+  async listCategories(database: Pool | PoolClient = this.pool): Promise<Category[]> {
+    const result = await database.query<Category>(
       `SELECT c.id, c.name
        FROM categories c
        WHERE c.active

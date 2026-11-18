@@ -22,6 +22,23 @@ export type CreateListingInput = z.infer<typeof createListingSchema>;
 export const updateListingDraftSchema = createListingSchema.strict();
 export type UpdateListingDraftInput = z.infer<typeof updateListingDraftSchema>;
 
+export const maxQuickListingMessages = 10;
+export const maxQuickListingMessageLength = 1200;
+
+export const quickListingConversationSchema = z.object({
+  turns: z.array(z.object({
+    message: z.string().trim().min(1).max(maxQuickListingMessageLength),
+    question: z.string().trim().min(1).max(500).optional()
+  }).strict()).min(1).max(maxQuickListingMessages)
+}).strict();
+export type QuickListingConversation = z.infer<typeof quickListingConversationSchema>;
+
+export const quickListingDraftSchema = createListingSchema.partial().strict();
+export type QuickListingSuggestion = {
+  draft: z.infer<typeof quickListingDraftSchema>;
+  question: string | null;
+};
+
 export const categorySchema = z.object({
   id: z.string(),
   name: z.string()

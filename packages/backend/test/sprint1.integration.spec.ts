@@ -136,6 +136,28 @@ describe("Sprint 1 PostgreSQL vertical slice", () => {
     expect(events.rows[0]?.count).toBe("1");
   });
 
+  it("reuses a draft after concurrent retries and preserves its current status", async () => {
+    const key = randomUUID();
+    const input = listingInput("Tin đăng nhanh");
+    try {
+      const [first, retry] = await Promise.all([
+        inventory.createDraft(verifiedActor, verifiedShop, input, key),
+        inventory.createDraft(verifiedActor, verifiedShop, input, key)
+      ]);
+      expect(retry.id).toBe(first.id);
+      await expect(inventory.createDraft(verifiedActor, verifiedShop, { ...input, price: input.price + 1 }, key))
+        .rejects.toMatchObject({ code: "IDEMPOTENCY_CONFLICT" });
+
+      await attachValidImage(first.id);
+      await inventory.publish(verifiedActor, verifiedShop, first.id);
+      const published = await inventory.createDraft(verifiedActor, verifiedShop, input, key);
+      expect(published).toMatchObject({ id: first.id, status: "ACTIVE" });
+      expect(published.images).toHaveLength(1);
+    } finally {
+      await pool.query("DELETE FROM idempotency_records WHERE actor_id = $1 AND scope = 'inventory.create-draft' AND idempotency_key = $2", [verifiedActor, key]);
+    }
+  });
+
   it("blocks a pending shop without leaking a public listing", async () => {
     const draft = await inventory.createDraft(pendingActor, pendingShop, listingInput("Pending item"));
 

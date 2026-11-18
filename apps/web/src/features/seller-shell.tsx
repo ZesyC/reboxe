@@ -17,15 +17,21 @@ function SellerNavItem({ active, children, href }: { active?: boolean; children:
 export function SellerShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const isQuickListing = pathname === "/seller/quick-listing";
+  const sidebarToggle = "fixed left-4 top-[10px] z-50 grid size-8 place-items-center rounded-md text-xl leading-none text-[#66758b] hover:bg-[var(--accent-soft)]";
 
   return (
-    <div className="flex min-h-[calc(100vh-52px)] bg-[var(--paper)] xl:h-[calc(100vh-52px)] xl:min-h-0 xl:overflow-hidden">
-      <button aria-controls="seller-sidebar" aria-expanded={sidebarOpen} aria-label={sidebarOpen ? "Ẩn thanh bên" : "Hiện thanh bên"} className="fixed left-4 top-[10px] z-50 grid size-8 place-items-center rounded-md text-xl leading-none text-[#66758b] hover:bg-[var(--accent-soft)]" onClick={() => setSidebarOpen((open) => !open)} type="button"><span aria-hidden>☰</span></button>
-      <aside className="w-[220px] shrink-0 border-r border-[var(--line)] bg-white px-4 py-[18px]" hidden={!sidebarOpen} id="seller-sidebar">
+    <div className={`flex bg-[var(--paper)] ${isQuickListing ? "h-[calc(100dvh-52px)] min-h-[320px]" : "min-h-[calc(100vh-52px)] xl:h-[calc(100vh-52px)] xl:min-h-0 xl:overflow-hidden"}`} data-quick-listing-shell={isQuickListing || undefined}>
+      <button aria-controls="seller-sidebar" aria-expanded={sidebarOpen} aria-label={sidebarOpen ? "Ẩn thanh bên" : "Hiện thanh bên"} className={`${sidebarToggle}${isQuickListing ? " hidden md:grid" : ""}`} onClick={() => setSidebarOpen((open) => !open)} type="button"><span aria-hidden>☰</span></button>
+      {isQuickListing && <button aria-controls="seller-sidebar" aria-expanded={mobileSidebarOpen} aria-label={mobileSidebarOpen ? "Ẩn thanh bên" : "Hiện thanh bên"} className={`${sidebarToggle} md:hidden`} onClick={() => setMobileSidebarOpen(open => !open)} type="button"><span aria-hidden>☰</span></button>}
+      {isQuickListing && mobileSidebarOpen && <div aria-hidden className="fixed inset-x-0 bottom-0 top-[52px] z-30 bg-slate-900/20 md:hidden" onClick={() => setMobileSidebarOpen(false)} />}
+      <aside className={`w-[220px] shrink-0 border-r border-[var(--line)] bg-white px-4 py-[18px] ${isQuickListing ? `fixed bottom-0 left-0 top-[52px] z-40 overflow-y-auto md:static ${mobileSidebarOpen ? "block" : "hidden"} ${sidebarOpen ? "md:block" : "md:hidden"}` : ""}`} hidden={!isQuickListing && !sidebarOpen} id="seller-sidebar">
         <nav aria-label="Điều hướng Kênh người bán">
           <p className="mb-1 text-[11px] font-medium text-[var(--muted)]">QUẢN LÝ BÁN HÀNG</p>
           <div className="grid gap-1">
             <SellerNavItem active={pathname === "/seller/products/new"} href="/seller/products/new">Thêm Sản Phẩm</SellerNavItem>
+            <SellerNavItem active={isQuickListing} href="/seller/quick-listing">Đăng nhanh</SellerNavItem>
             <SellerNavItem active={pathname === "/seller/inventory"} href="/seller/inventory">Quản Lý Kho Hàng</SellerNavItem>
             <SellerNavItem active={pathname === "/seller/promotions"} href="/seller/promotions">Quảng Bá Sản Phẩm</SellerNavItem>
             <SellerNavItem active={pathname === "/seller/orders"} href="/seller/orders">Quản Lý Đơn Hàng</SellerNavItem>
@@ -40,7 +46,7 @@ export function SellerShell({ children }: { children: ReactNode }) {
           <SellerNavItem active={pathname === "/seller/reports"} href="/seller/reports">Báo Cáo Hiệu Suất</SellerNavItem>
         </nav>
       </aside>
-      <main className={`min-w-0 flex-1 overscroll-contain p-4 sm:p-6 ${pathname === "/seller/inventory" ? "xl:overflow-hidden" : "xl:overflow-y-auto"}`}><div className="mx-auto h-full max-w-[1200px]">{children}</div></main>
+      <main className={`min-w-0 flex-1 overscroll-contain ${isQuickListing ? "p-2 sm:p-5 xl:overflow-hidden" : `p-4 sm:p-6 ${pathname === "/seller/inventory" ? "xl:overflow-hidden" : "xl:overflow-y-auto"}`}`}><div className="mx-auto h-full max-w-[1200px]">{children}</div></main>
     </div>
   );
 }

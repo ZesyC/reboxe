@@ -20,6 +20,8 @@ import {
   type SellerInventoryPackage,
   maxReturnManifestFileBytes,
   publicListingsQuerySchema,
+  quickListingConversationSchema,
+  type QuickListingSuggestion,
   upsertShopReviewSchema,
   updateListingDraftSchema,
   scanReturnPackageSchema,
@@ -29,6 +31,7 @@ import {
   type BatchCreatePackageListingsResult
 } from "@reboxe/shared";
 import { INVENTORY } from "../../backend.providers";
+import { suggestQuickListing } from "../../platform/ai/quick-listing";
 import { CurrentActor } from "../decorators/current-actor";
 import { Public } from "../decorators/public";
 import type { Actor } from "../types/authenticated-request";
@@ -52,13 +55,30 @@ export class ListingsController {
   createDraft(
     @CurrentActor() actor: Actor,
     @Param("shopId") shopId: string,
-    @Body() body: unknown
+    @Body() body: unknown,
+    @Headers("idempotency-key") key?: string
   ): Promise<Listing> {
     const parsed = createListingSchema.safeParse(body);
     if (!parsed.success) {
       throw new DomainError("VALIDATION_FAILED", 422, parsed.error.issues[0]?.message ?? "Invalid listing");
     }
-    return this.inventory.createDraft(actor.id, shopId, parsed.data);
+    if (key !== undefined && !/^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/i.test(key)) {
+      throw new DomainError("VALIDATION_FAILED", 422, "A UUID idempotency key is required");
+    }
+    return this.inventory.createDraft(actor.id, shopId, parsed.data, key);
+  }
+
+  @Post("shops/:shopId/quick-listing")
+  async suggestListing(
+    @CurrentActor() actor: Actor,
+    @Param("shopId") shopId: string,
+    @Body() body: unknown
+  ): Promise<QuickListingSuggestion> {
+    const parsed = quickListingConversationSchema.safeParse(body);
+    if (!parsed.success) throw new DomainError("VALIDATION_FAILED", 422, "Invalid listing conversation");
+    const categories = await this.inventory.listListingCategoriesForShop(actor.id, shopId);
+    if (!categories.length) throw new DomainError("INVALID_CATEGORY", 422, "No listing categories are available");
+    return suggestQuickListing(parsed.data, categories);
   }
 
   @Post("shops/:shopId/return-imports/preview")

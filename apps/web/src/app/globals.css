@@ -45,6 +45,8 @@ input:focus, input:focus-visible, select:focus, select:focus-visible, textarea:f
   outline: none;
 }
 
+body:has(> [data-quick-listing-shell]) > footer { display: none; }
+
 .reboxe-container {
   margin-inline: auto;
   width: 100%;

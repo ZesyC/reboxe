@@ -22,6 +22,8 @@ import type {
   ShopReviewEligibility,
   PrivacyPreferences,
   PublishListingResult,
+  QuickListingConversation,
+  QuickListingSuggestion,
   ReturnManifestPreview,
   SellerInventoryPackage,
   SellerFinanceSnapshot,
@@ -209,9 +211,13 @@ export function createApiClient(options: ApiClientOptions) {
       request<BatchCreatePackageListingsResult>(`/v1/shops/${encodeURIComponent(shopId)}/return-packages/listings/batch`, {
         method: "POST", body: JSON.stringify({ packageIds })
       }),
-    createListing: (shopId: string, input: CreateListingInput) =>
+    suggestQuickListing: (shopId: string, input: QuickListingConversation) => request<QuickListingSuggestion>(
+      `/v1/shops/${encodeURIComponent(shopId)}/quick-listing`, { method: "POST", body: JSON.stringify(input) }
+    ),
+    createListing: (shopId: string, input: CreateListingInput, idempotencyKey?: string) =>
       request<Listing>(`/v1/shops/${encodeURIComponent(shopId)}/listings`, {
         method: "POST",
+        headers: idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {},
         body: JSON.stringify(input)
       }),
     previewReturnManifest: (shopId: string, file: File) => {

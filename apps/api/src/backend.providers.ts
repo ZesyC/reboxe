@@ -77,7 +77,7 @@ export const backendProviders: Provider[] = [
     provide: MARKETPLACE,
     inject: [DATABASE],
     useFactory: (database: DatabaseContext) => new MarketplaceModule(database.pool,
-      process.env.MARKETPLACE_TOKEN_ENCRYPTION_KEY ?? sellerPiiEncryptionSecret(), createMarketplaceProviders())
+      process.env.MARKETPLACE_TOKEN_ENCRYPTION_KEY || sellerPiiEncryptionSecret(), createMarketplaceProviders())
   },
   {
     provide: DATABASE,
