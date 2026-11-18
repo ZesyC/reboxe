@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="vi">
-      <body className={beVietnamPro.variable}>
+      <body className={`${beVietnamPro.variable} flex min-h-dvh flex-col`}>
         <a
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-[var(--accent-strong)] focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg"
           href="#main-content"
@@ -28,7 +28,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           Bỏ qua đến nội dung chính
         </a>
         <SiteHeader />
-        <div id="main-content" tabIndex={-1}>
+        <div className="grow" id="main-content" tabIndex={-1}>
           {children}
         </div>
         <footer className="border-t border-[var(--line)] bg-[var(--card)] px-4 py-4 text-center text-xs text-[var(--muted)]">

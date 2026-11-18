@@ -80,7 +80,9 @@ export class KycModule {
       } else {
         await client.query(
           `INSERT INTO processing_records(id,actor_id,purpose,target_type,target_id,notice_version)
-           VALUES($1,$2,'KYC','SELLER_KYC',$3,'2026-09-07')`,
+           VALUES($1,$2,'KYC','SELLER_KYC',$3,coalesce(
+             (SELECT version FROM legal_artifacts WHERE slug='processing-notice' AND effective_at<=now()
+              ORDER BY effective_at DESC LIMIT 1), '2026-09-07'))`,
           [`RBX-PR-${ulid()}`, actorId, id]
         );
         await client.query(
