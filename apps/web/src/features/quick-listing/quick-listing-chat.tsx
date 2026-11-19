@@ -212,7 +212,7 @@ export function QuickListingChat({ shopId, categories }: { shopId: string; categ
           ))}
           {pendingTurn && <>
             <SellerBubble turn={pendingTurn} />
-            <AssistantBubble><p className="text-[var(--muted)]" role="status">Đang đọc tin nhắn…</p></AssistantBubble>
+            <AssistantBubble><p className="text-[var(--muted)]" role="status">Đang suy nghĩ ...</p></AssistantBubble>
           </>}
           {!pendingTurn && preview.success && <AssistantBubble>
             <h2 className="text-sm font-bold text-[var(--accent-strong)]">Xem trước tin đăng</h2>

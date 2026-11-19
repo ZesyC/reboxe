@@ -8,6 +8,8 @@ export const listingConditionSchema = z.enum([
   "DEFECT"
 ]);
 
+export const maxListingWeightGram = 100_000;
+
 export const createListingSchema = z.object({
   title: z.string().trim().min(3).max(180),
   description: z.string().trim().max(5_000).optional(),
@@ -15,7 +17,7 @@ export const createListingSchema = z.object({
   conditionGrade: listingConditionSchema,
   conditionNotes: z.string().trim().min(3).max(2_000),
   price: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
-  weightGram: z.number().int().positive().max(100_000)
+  weightGram: z.number().int().positive().max(maxListingWeightGram)
 });
 export type CreateListingInput = z.infer<typeof createListingSchema>;
 

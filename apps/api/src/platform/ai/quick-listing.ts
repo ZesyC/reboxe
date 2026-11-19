@@ -1,5 +1,5 @@
 import { DomainError } from "@reboxe/backend";
-import { quickListingDraftSchema, type Category, type QuickListingConversation, type QuickListingSuggestion } from "@reboxe/shared";
+import { maxListingWeightGram, quickListingDraftSchema, type Category, type QuickListingConversation, type QuickListingSuggestion } from "@reboxe/shared";
 
 const extractionInstructions = `Bạn trích thông tin cho đúng một tin đăng bán trên REBOXE. Trả về một object JSON, không markdown.
 Các trường cho phép: title (tên sản phẩm), description (thông tin sản phẩm bổ sung), categoryId, conditionGrade, conditionNotes (tình trạng và lỗi shop khai báo), price (số nguyên VND), weightGram (số nguyên gram).
@@ -18,6 +18,7 @@ export async function suggestQuickListing(
   if (!key || !baseUrl || !model) throw new DomainError("AI_UNAVAILABLE", 503, "Listing assistant is not configured");
 
   let draft: QuickListingSuggestion["draft"];
+  let weightTooHeavy = false;
   try {
     const endpoint = new URL(`${baseUrl.replace(/\/+$/, "")}/v1/messages`);
     if (endpoint.protocol !== "https:") throw new Error("The AI endpoint must use HTTPS");
@@ -41,13 +42,20 @@ export async function suggestQuickListing(
     if (result.stop_reason === "max_tokens") throw new Error("AI response was truncated");
     const output = result.content?.filter(block => block.type === "text").map(block => block.text).join("").trim();
     if (!output) throw new Error("AI returned no text");
-    draft = quickListingDraftSchema.parse(JSON.parse(output.replace(/^```(?:json)?\s*([\s\S]*?)\s*```$/i, "$1")));
+    const fields = JSON.parse(output.replace(/^```(?:json)?\s*([\s\S]*?)\s*```$/i, "$1")) as { weightGram?: unknown } | null;
+    if (typeof fields?.weightGram === "number" && Number.isSafeInteger(fields.weightGram) && fields.weightGram > maxListingWeightGram) {
+      weightTooHeavy = true;
+      delete fields.weightGram;
+    }
+    draft = quickListingDraftSchema.parse(fields);
   } catch {
     throw new DomainError("AI_UNAVAILABLE", 503, "Listing assistant is temporarily unavailable");
   }
 
   if (!categories.some(category => category.id === draft.categoryId)) delete draft.categoryId;
-  const question = !draft.title ? "Bạn muốn đăng bán món gì?"
+  const question = weightTooHeavy
+    ? `REBOXE chỉ hỗ trợ kiện hàng tối đa ${maxListingWeightGram / 1000} kg. Nếu bạn nhập nhầm, hãy gửi lại cân nặng đúng.`
+    : !draft.title ? "Bạn muốn đăng bán món gì?"
     : !draft.price ? "Bạn muốn đăng giá bao nhiêu?"
     : !draft.categoryId ? "Bạn muốn xếp món này vào danh mục nào?"
     : !draft.conditionGrade || !draft.conditionNotes ? "Món này còn mới hay đã qua sử dụng? Có lỗi hoặc thiếu gì không?"

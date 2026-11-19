@@ -46,6 +46,21 @@ describe("quick listing assistant", () => {
     expect(JSON.parse(body.messages[0].content)).toEqual({ ...conversation, categories });
   });
 
+  it("keeps the draft and asks for a corrected weight after a 200 OK response with 200 kg", async () => {
+    const conversation = { turns: [...turns, { question: "Kiện này nặng khoảng bao nhiêu gam?", message: "nặng 200kg" }] };
+    mockMessage({ ...draft, weightGram: 200_000 });
+    const overweight = await suggestQuickListing(conversation, categories);
+    expect(overweight).toEqual({
+      draft,
+      question: "REBOXE chỉ hỗ trợ kiện hàng tối đa 100 kg. Nếu bạn nhập nhầm, hãy gửi lại cân nặng đúng."
+    });
+
+    mockMessage({ ...draft, weightGram: 100_000 });
+    await expect(suggestQuickListing({ turns: [...conversation.turns, { question: overweight.question!, message: "Mình nhập nhầm, cân lại là 100kg" }] }, categories)).resolves.toEqual({
+      draft: { ...draft, weightGram: 100_000 }, question: null
+    });
+  });
+
   it("asks for a category when the provider suggests one outside the catalog", async () => {
     mockMessage({ ...draft, categoryId: "invented" });
     const result = await suggestQuickListing({ turns }, categories);
