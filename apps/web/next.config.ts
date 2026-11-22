@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
     return [{ source: "/(.*)", headers: [
       { key: "X-Content-Type-Options", value: "nosniff" },
       { key: "Referrer-Policy", value: "no-referrer" },
-      { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=()" },
+      { key: "Permissions-Policy", value: "camera=(self), microphone=(self), geolocation=()" },
       { key: "Content-Security-Policy", value: `default-src 'self'; img-src 'self' data: blob: https:${localCatalogImages}; media-src 'self' blob:; connect-src 'self' http://127.0.0.1:* https:; script-src 'self' 'unsafe-inline'${devEval}; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'` }
     ] }];
   }

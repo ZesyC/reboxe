@@ -1,5 +1,6 @@
 import { DomainError } from "@reboxe/backend";
 import { maxListingWeightGram, quickListingDraftSchema, type Category, type QuickListingConversation, type QuickListingSuggestion } from "@reboxe/shared";
+import { requestAnthropicJson } from "./anthropic";
 
 const extractionInstructions = `Bạn trích thông tin cho đúng một tin đăng bán trên REBOXE. Trả về một object JSON, không markdown.
 Các trường cho phép: title (tên sản phẩm), description (thông tin sản phẩm bổ sung), categoryId, conditionGrade, conditionNotes (tình trạng và lỗi shop khai báo), price (số nguyên VND), weightGram (số nguyên gram).
@@ -12,43 +13,17 @@ export async function suggestQuickListing(
   conversation: QuickListingConversation,
   categories: Category[]
 ): Promise<QuickListingSuggestion> {
-  const key = process.env.ANTHROPIC_API_KEY?.trim();
-  const baseUrl = process.env.ANTHROPIC_BASE_URL?.trim();
-  const model = process.env.ANTHROPIC_MODEL?.trim();
-  if (!key || !baseUrl || !model) throw new DomainError("AI_UNAVAILABLE", 503, "Listing assistant is not configured");
-
   let draft: QuickListingSuggestion["draft"];
   let weightTooHeavy = false;
   try {
-    const endpoint = new URL(`${baseUrl.replace(/\/+$/, "")}/v1/messages`);
-    if (endpoint.protocol !== "https:") throw new Error("The AI endpoint must use HTTPS");
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "anthropic-version": "2023-06-01", "x-api-key": key, "content-type": "application/json" },
-      signal: AbortSignal.timeout(25_000),
-      redirect: "error",
-      body: JSON.stringify({
-        model,
-        max_tokens: 1024,
-        system: extractionInstructions,
-        messages: [{ role: "user", content: JSON.stringify({ ...conversation, categories }) }]
-      })
-    });
-    if (!response.ok) throw new Error(`AI HTTP ${response.status}`);
-    const result = await response.json() as {
-      stop_reason?: string;
-      content?: { type: string; text?: string }[];
-    };
-    if (result.stop_reason === "max_tokens") throw new Error("AI response was truncated");
-    const output = result.content?.filter(block => block.type === "text").map(block => block.text).join("").trim();
-    if (!output) throw new Error("AI returned no text");
-    const fields = JSON.parse(output.replace(/^```(?:json)?\s*([\s\S]*?)\s*```$/i, "$1")) as { weightGram?: unknown } | null;
+    const fields = await requestAnthropicJson(extractionInstructions, { ...conversation, categories }) as { weightGram?: unknown } | null;
     if (typeof fields?.weightGram === "number" && Number.isSafeInteger(fields.weightGram) && fields.weightGram > maxListingWeightGram) {
       weightTooHeavy = true;
       delete fields.weightGram;
     }
     draft = quickListingDraftSchema.parse(fields);
-  } catch {
+  } catch (error) {
+    if (error instanceof DomainError) throw error;
     throw new DomainError("AI_UNAVAILABLE", 503, "Listing assistant is temporarily unavailable");
   }
 

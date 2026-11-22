@@ -1397,6 +1397,40 @@ paths:
               schema: { $ref: "#/components/schemas/ShopReviewEligibility" }
         "401": { description: Authentication required }
         "404": { description: Active shop not found }
+  /v1/shopping-assistant/suggestions:
+    post:
+      operationId: suggestShoppingListings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [messages]
+              additionalProperties: false
+              properties:
+                messages:
+                  type: array
+                  minItems: 1
+                  maxItems: 8
+                  items: { type: string, minLength: 1, maxLength: 500 }
+      responses:
+        "201":
+          description: Up to three matching purchasable listings in ranked order
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [listings, needsProductDetails]
+                properties:
+                  listings:
+                    type: array
+                    maxItems: 3
+                    items: { $ref: "#/components/schemas/PublicListing" }
+                  needsProductDetails: { type: boolean }
+        "422": { description: Invalid shopping conversation }
+        "429": { description: Rate limit exceeded }
+        "503": { description: AI provider unavailable }
   /v1/listings:
     get:
       operationId: listPublicListings

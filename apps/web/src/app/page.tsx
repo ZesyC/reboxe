@@ -1,14 +1,29 @@
 import { ProductCard } from "../features/product-card";
+import { ShoppingChatWidget } from "../features/shopping-chat/shopping-chat-widget";
 import { SiteStatus } from "../features/site-status";
 import { createPublicApiClient } from "../platform/api/server";
 
-export default async function HomePage() {
-  const result = await createPublicApiClient().listPublicListings().catch(() => null);
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ chat?: string; listing?: string }> }) {
+  const { chat, listing } = await searchParams;
+  const openChat = chat === "open";
+  const requested = openChat && typeof listing === "string" && /^[a-z\d-]{1,80}$/i.test(listing) ? listing : undefined;
+  const api = createPublicApiClient();
+  const [result, product] = await Promise.all([
+    api.listPublicListings().catch(() => null),
+    requested ? api.getPublicListing(requested).catch(() => undefined) : undefined
+  ]);
   if (result === null) return <SiteStatus code={502} />;
   const sponsored = result.sponsored ?? [];
+  const initialListing = product?.package && product.availableQuantity === 1 ? product : undefined;
 
   return (
     <main>
+      <ShoppingChatWidget
+        key={`${openChat}:${requested ?? ""}`}
+        initialOpen={openChat}
+        initialListing={initialListing}
+        unavailable={Boolean(openChat && listing && !initialListing)}
+      />
       <section className="bg-white px-4 pt-5 sm:px-6">
         <div className="reboxe-container text-center">
           <h1 className="text-lg font-semibold leading-6 text-[var(--accent)]">GỢI Ý HÔM NAY</h1>

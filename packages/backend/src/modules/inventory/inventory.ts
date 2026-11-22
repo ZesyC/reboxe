@@ -1095,7 +1095,7 @@ export class InventoryModule {
     return presentShopReview(row);
   }
 
-  async listPublicListings(input: PublicListingsQuery): Promise<PublicListingPage> {
+  async listPublicListings(input: PublicListingsQuery, checkout?: { maxPriceVnd: number | undefined }): Promise<PublicListingPage> {
     const values: unknown[] = [];
     const conditions = ["l.status = 'ACTIVE'", "s.status = 'ACTIVE'"];
     const parameter = (value: unknown): string => {
@@ -1103,12 +1103,21 @@ export class InventoryModule {
       return `$${values.length}`;
     };
 
+    if (checkout) {
+      conditions.push("p.inventory_status = 'AVAILABLE'");
+      if (checkout.maxPriceVnd !== undefined) conditions.push(`l.price <= ${parameter(checkout.maxPriceVnd)}`);
+    }
     if (input.q) {
       const query = parameter(input.q);
-      conditions.push(`to_tsvector(
+      const listingMatch = `to_tsvector(
         'simple'::regconfig,
         reboxe_unaccent(l.title || ' ' || coalesce(l.description, '') || ' ' || l.condition_notes)
-      ) @@ plainto_tsquery('simple'::regconfig, reboxe_unaccent(${query}))`);
+      ) @@ plainto_tsquery('simple'::regconfig, reboxe_unaccent(${query}))`;
+      conditions.push(checkout ? `(${listingMatch} OR EXISTS (
+        SELECT 1 FROM return_lines rl WHERE rl.return_package_id = p.id
+          AND to_tsvector('simple'::regconfig, reboxe_unaccent(concat_ws(' ', rl.product_name, rl.variant_name, rl.brand)))
+            @@ plainto_tsquery('simple'::regconfig, reboxe_unaccent(${query}))
+      ))` : listingMatch);
     }
     if (input.category) {
       conditions.push(`l.category_id = ${parameter(input.category)}`);
@@ -1128,7 +1137,7 @@ export class InventoryModule {
     const orderBy = input.sort === "newest"
       ? "l.created_at DESC, l.id DESC"
       : `l.price ${input.sort === "price_asc" ? "ASC" : "DESC"}, l.id ${input.sort === "price_asc" ? "ASC" : "DESC"}`;
-    const homepage = !input.cursor && !input.q && !input.category && !input.shopId && input.sort === "newest";
+    const homepage = !checkout && !input.cursor && !input.q && !input.category && !input.shopId && input.sort === "newest";
     const sponsoredRows = homepage
       ? (await this.pool.query<ListingRow>(
         `${listingSelect}

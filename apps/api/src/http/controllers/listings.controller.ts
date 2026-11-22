@@ -22,6 +22,8 @@ import {
   publicListingsQuerySchema,
   quickListingConversationSchema,
   type QuickListingSuggestion,
+  shoppingConversationSchema,
+  type ShoppingSuggestions,
   upsertShopReviewSchema,
   updateListingDraftSchema,
   scanReturnPackageSchema,
@@ -32,6 +34,7 @@ import {
 } from "@reboxe/shared";
 import { INVENTORY } from "../../backend.providers";
 import { suggestQuickListing } from "../../platform/ai/quick-listing";
+import { suggestShoppingListings } from "../../platform/ai/shopping-assistant";
 import { CurrentActor } from "../decorators/current-actor";
 import { Public } from "../decorators/public";
 import type { Actor } from "../types/authenticated-request";
@@ -247,6 +250,14 @@ export class ListingsController {
       throw new DomainError("VALIDATION_FAILED", 422, parsed.error.issues[0]?.message ?? "Invalid shop review");
     }
     return this.inventory.upsertShopReview(actor.id, shopId, parsed.data);
+  }
+
+  @Public()
+  @Post("shopping-assistant/suggestions")
+  suggestShopping(@Body() body: unknown): Promise<ShoppingSuggestions> {
+    const parsed = shoppingConversationSchema.safeParse(body);
+    if (!parsed.success) throw new DomainError("VALIDATION_FAILED", 422, "Invalid shopping conversation");
+    return suggestShoppingListings(parsed.data, this.inventory);
   }
 
   @Public()

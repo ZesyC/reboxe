@@ -8,7 +8,7 @@ import { ProductVisual } from "./commerce-ui";
 import { createBrowserApiClient } from "../platform/api/browser";
 import { readCart, writeCart } from "./cart-storage";
 import { useRouter } from "next/navigation";
-import { checkoutAttempt, clearCheckoutAttempt } from "./checkout-session";
+import { confirmSandboxOrder } from "./checkout-session";
 
 const api = createBrowserApiClient();
 
@@ -58,18 +58,12 @@ export function CheckoutPreview({ listingIds }: { listingIds: string[] }) {
     if (!item || !addressId || !quote) return;
     setSubmitting(true); setError(undefined);
     try {
-      const attempt = checkoutAttempt(sessionStorage, `${item.id}:${addressId}`);
-      const initialized = await api.initCheckout({ items: [{ listingId: item.id, quantity: 1 }], addressId }, attempt.initKey);
-      if (initialized.status === "EXPIRED") {
-        clearCheckoutAttempt(sessionStorage, `${item.id}:${addressId}`);
-        throw new Error("Lượt giữ hàng đã hết hạn. Bấm đặt hàng lại để kiểm tra và giữ kiện mới.");
-      }
-      if (initialized.totalVnd !== quote.totalVnd) {
-        setQuote({ subtotalVnd: initialized.subtotalVnd, shippingVnd: initialized.feeVnd, totalVnd: initialized.totalVnd, mode: initialized.mode });
+      const result = await confirmSandboxOrder(api, item.id, addressId, quote);
+      if (result.quote) {
+        setQuote(result.quote);
         throw new Error("Giá đã thay đổi. Vui lòng kiểm tra tổng mới rồi bấm đặt hàng lại.");
       }
-      const confirmed = await api.payCheckout(initialized.id, attempt.payKey);
-      setOrder(confirmed);
+      setOrder(result.order);
       writeCart(readCart().filter((line) => line.listingId !== item.id));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Không thể đặt hàng. Vui lòng thử lại.");

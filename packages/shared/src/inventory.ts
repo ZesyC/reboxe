@@ -123,6 +123,15 @@ export const publicListingSchema = listingSchema.omit({ status: true, weightGram
 });
 export type PublicListing = z.infer<typeof publicListingSchema>;
 
+export const shoppingConversationSchema = z.object({
+  messages: z.array(z.string().trim().min(1).max(500)).min(1).max(8)
+}).strict();
+export type ShoppingConversation = z.infer<typeof shoppingConversationSchema>;
+export type ShoppingSuggestions = {
+  listings: PublicListing[];
+  needsProductDetails: boolean;
+};
+
 const optionalQueryText = (maxLength: number) =>
   z.preprocess((value) => value === "" ? undefined : value, z.string().trim().min(1).max(maxLength).optional());
 

@@ -814,6 +814,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/shopping-assistant/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["suggestShoppingListings"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/listings": {
         parameters: {
             query?: never;
@@ -3469,6 +3485,56 @@ export interface operations {
             };
             /** @description Active shop not found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    suggestShoppingListings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    messages: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description Up to three matching purchasable listings in ranked order */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        listings: components["schemas"]["PublicListing"][];
+                        needsProductDetails: boolean;
+                    };
+                };
+            };
+            /** @description Invalid shopping conversation */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Rate limit exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description AI provider unavailable */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };

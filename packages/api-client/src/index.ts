@@ -24,6 +24,8 @@ import type {
   PublishListingResult,
   QuickListingConversation,
   QuickListingSuggestion,
+  ShoppingConversation,
+  ShoppingSuggestions,
   ReturnManifestPreview,
   SellerInventoryPackage,
   SellerFinanceSnapshot,
@@ -291,6 +293,9 @@ export function createApiClient(options: ApiClientOptions) {
       return request<PublicListingPage>(`/v1/listings${suffix}`, { cache: "no-store" });
     },
     getPublicListing: (listingId: string) => request<PublicListing>(`/v1/listings/${encodeURIComponent(listingId)}`),
+    suggestShoppingListings: (input: ShoppingConversation) => request<ShoppingSuggestions>("/v1/shopping-assistant/suggestions", {
+      method: "POST", body: JSON.stringify(input)
+    }),
     initCheckout: (input: CheckoutInitInput, key: string) => request<CommerceOrder>("/v1/checkout/init", {
       method: "POST", headers: { "Idempotency-Key": key }, body: JSON.stringify(input)
     }),
