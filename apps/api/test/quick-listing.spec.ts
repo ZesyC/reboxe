@@ -21,6 +21,7 @@ describe("quick listing assistant", () => {
     vi.stubEnv("ANTHROPIC_API_KEY", "test-key");
     vi.stubEnv("ANTHROPIC_BASE_URL", "https://ai.example.test/");
     vi.stubEnv("ANTHROPIC_MODEL", "test-model");
+    vi.stubEnv("GROQ_API_KEY", "");
   });
 
   afterEach(() => {
@@ -29,6 +30,7 @@ describe("quick listing assistant", () => {
   });
 
   it("asks a follow-up for missing facts and passes later replies with their question", async () => {
+    vi.stubEnv("GROQ_API_KEY", "groq-test-key");
     mockMessage(draft);
     const first = await suggestQuickListing({ turns }, categories);
     expect(first).toEqual({ draft, question: "Kiện này nặng khoảng bao nhiêu gam?" });
@@ -39,6 +41,7 @@ describe("quick listing assistant", () => {
       draft: { ...draft, weightGram: 300 }, question: null
     });
     const [url, request] = fetchMock.mock.calls[0]!;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(String(url)).toBe("https://ai.example.test/v1/messages");
     expect(request?.redirect).toBe("error");
     const body = JSON.parse(String(request?.body));
@@ -74,5 +77,45 @@ describe("quick listing assistant", () => {
 
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 429 })));
     await expect(suggestQuickListing({ turns }, categories)).rejects.toMatchObject({ code: "AI_UNAVAILABLE", status: 503 });
+  });
+
+  it.each([
+    ["a rate limit", () => new Response(null, { status: 429 })],
+    ["malformed JSON", () => Response.json({ content: [{ type: "text", text: "{" }] })],
+    ["an invalid draft", () => Response.json({ content: [{ type: "text", text: '{"price":"140k"}' }] })]
+  ])("uses Groq after Anthropic returns %s", async (_, primaryResponse) => {
+    vi.stubEnv("GROQ_API_KEY", " groq-test-key ");
+    const fetchMock = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(primaryResponse())
+      .mockResolvedValueOnce(Response.json({
+        choices: [{ finish_reason: "stop", message: { content: JSON.stringify(draft) } }]
+      }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(suggestQuickListing({ turns }, categories)).resolves.toMatchObject({ draft });
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
+      "https://ai.example.test/v1/messages", "https://api.groq.com/openai/v1/chat/completions"
+    ]);
+    const request = fetchMock.mock.calls[1]?.[1];
+    expect(new Headers(request?.headers).get("authorization")).toBe("Bearer groq-test-key");
+    expect(new Headers(request?.headers).has("x-api-key")).toBe(false);
+    expect(request?.redirect).toBe("error");
+    const body = JSON.parse(String(request?.body));
+    expect(body).toMatchObject({ model: "openai/gpt-oss-120b", response_format: { type: "json_object" } });
+    expect(body.messages.map(({ role }: { role: string }) => role)).toEqual(["system", "user"]);
+    expect(JSON.parse(body.messages[1].content)).toEqual({ turns, categories });
+  });
+
+  it("returns 503 when both providers fail", async () => {
+    vi.stubEnv("GROQ_API_KEY", "groq-test-key");
+    const fetchMock = vi.fn<typeof fetch>()
+      .mockRejectedValueOnce(new DOMException("Timed out", "TimeoutError"))
+      .mockResolvedValueOnce(Response.json({
+        choices: [{ finish_reason: "length", message: { content: JSON.stringify(draft) } }]
+      }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(suggestQuickListing({ turns }, categories)).rejects.toMatchObject({ code: "AI_UNAVAILABLE", status: 503 });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

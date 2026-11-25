@@ -1431,6 +1431,33 @@ paths:
         "422": { description: Invalid shopping conversation }
         "429": { description: Rate limit exceeded }
         "503": { description: AI provider unavailable }
+  /v1/shopping-assistant/transcription:
+    post:
+      operationId: transcribeShoppingAudio
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary, description: "WebM, Ogg or MP4 audio up to 2 MiB" }
+      responses:
+        "201":
+          description: Vietnamese transcript, empty when no speech was recognized
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [text]
+                properties:
+                  text: { type: string, maxLength: 500 }
+        "400": { description: Invalid multipart upload }
+        "413": { description: Recording too large }
+        "422": { description: Missing or unsupported recording }
+        "429": { description: Rate limit exceeded }
+        "503": { description: Transcription provider unavailable }
   /v1/listings:
     get:
       operationId: listPublicListings

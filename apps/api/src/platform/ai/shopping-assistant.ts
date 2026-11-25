@@ -1,6 +1,6 @@
 import { DomainError, type InventoryModule } from "@reboxe/backend";
 import type { PublicListing, PublicListingsQuery, ShoppingConversation, ShoppingSuggestions } from "@reboxe/shared";
-import { requestAnthropicJson } from "./anthropic";
+import { requestAiJson } from "./json-provider";
 
 const searchInstructions = `Bạn tìm sản phẩm trong danh mục REBOXE. Đọc messages theo thứ tự, ưu tiên yêu cầu và sửa đổi mới nhất.
 Trả một object JSON với queries (tối đa 3 cụm từ khóa ngắn), categoryId (mã từ categories hoặc null), maxPriceVnd (số nguyên VND hoặc null).
@@ -21,14 +21,15 @@ export async function suggestShoppingListings(
     .replace(/\b[\w.+-]+@[\w.-]+\.[a-z]{2,}\b/gi, "[email]")
     .replace(/(?<![\d\w])(?:\+84|0)(?:[ .-]*\d){9}(?!\d)/g, "[số điện thoại]"));
   const categories = await inventory.listCategories();
-  const plan = await requestAnthropicJson(searchInstructions, { messages, categories }) as {
-    queries?: unknown; categoryId?: unknown; maxPriceVnd?: unknown;
-  } | null;
-  if (!Array.isArray(plan?.queries) || plan.queries.length > 3 || plan.queries.some((q) => typeof q !== "string" || q.length > 180)
-    || (plan.categoryId !== null && typeof plan.categoryId !== "string")
-    || (plan.maxPriceVnd !== null && (typeof plan.maxPriceVnd !== "number" || !Number.isSafeInteger(plan.maxPriceVnd) || plan.maxPriceVnd < 0))) {
-    throw new DomainError("AI_UNAVAILABLE", 503, "Invalid shopping search plan");
-  }
+  const plan = await requestAiJson(searchInstructions, { messages, categories }, (output) => {
+    const plan = output as { queries?: unknown; categoryId?: unknown; maxPriceVnd?: unknown } | null;
+    if (!Array.isArray(plan?.queries) || plan.queries.length > 3 || plan.queries.some((q) => typeof q !== "string" || q.length > 180)
+      || (plan.categoryId !== null && typeof plan.categoryId !== "string")
+      || (plan.maxPriceVnd !== null && (typeof plan.maxPriceVnd !== "number" || !Number.isSafeInteger(plan.maxPriceVnd) || plan.maxPriceVnd < 0))) {
+      throw new DomainError("AI_UNAVAILABLE", 503, "Invalid shopping search plan");
+    }
+    return { queries: plan.queries, categoryId: plan.categoryId, maxPriceVnd: plan.maxPriceVnd };
+  });
 
   const queries: PublicListingsQuery[] = [...new Set<string>(plan.queries.map((q: string) => q.trim()).filter(Boolean))]
     .map((q) => ({ q, sort: "newest" }));
@@ -48,7 +49,7 @@ export async function suggestShoppingListings(
   }
   if (candidates.size === 0) return { listings: [], needsProductDetails: false };
 
-  const ranked = await requestAnthropicJson(rankingInstructions, {
+  const listingIds = await requestAiJson(rankingInstructions, {
     messages,
     candidates: [...candidates.values()].map((listing) => ({
       id: listing.id,
@@ -60,10 +61,13 @@ export async function suggestShoppingListings(
       manifest: listing.package?.lines.slice(0, 5).map(({ productName, variantName, brand }) =>
         [productName, variantName, brand].filter(Boolean).join(" ").slice(0, 140))
     }))
-  }) as { listingIds?: unknown } | null;
-  if (!Array.isArray(ranked?.listingIds) || ranked.listingIds.length > 3 || ranked.listingIds.some((id) => typeof id !== "string")) {
-    throw new DomainError("AI_UNAVAILABLE", 503, "Invalid shopping recommendations");
-  }
-  const listings = [...new Set<string>(ranked.listingIds)].flatMap((id) => candidates.get(id) ?? []);
+  }, (output) => {
+    const ranked = output as { listingIds?: unknown } | null;
+    if (!Array.isArray(ranked?.listingIds) || ranked.listingIds.length > 3 || ranked.listingIds.some((id) => typeof id !== "string")) {
+      throw new DomainError("AI_UNAVAILABLE", 503, "Invalid shopping recommendations");
+    }
+    return ranked.listingIds;
+  });
+  const listings = [...new Set<string>(listingIds)].flatMap((id) => candidates.get(id) ?? []);
   return { listings, needsProductDetails: false };
 }

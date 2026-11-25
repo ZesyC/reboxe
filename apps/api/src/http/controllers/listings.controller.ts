@@ -35,6 +35,7 @@ import {
 import { INVENTORY } from "../../backend.providers";
 import { suggestQuickListing } from "../../platform/ai/quick-listing";
 import { suggestShoppingListings } from "../../platform/ai/shopping-assistant";
+import { maxShoppingAudioBytes, transcribeShoppingAudio, type ShoppingAudioFile } from "../../platform/ai/shopping-transcription";
 import { CurrentActor } from "../decorators/current-actor";
 import { Public } from "../decorators/public";
 import type { Actor } from "../types/authenticated-request";
@@ -258,6 +259,13 @@ export class ListingsController {
     const parsed = shoppingConversationSchema.safeParse(body);
     if (!parsed.success) throw new DomainError("VALIDATION_FAILED", 422, "Invalid shopping conversation");
     return suggestShoppingListings(parsed.data, this.inventory);
+  }
+
+  @Public()
+  @Post("shopping-assistant/transcription")
+  @UseInterceptors(FileInterceptor("file", { limits: { fileSize: maxShoppingAudioBytes, files: 1, fields: 0 } }))
+  transcribeShopping(@UploadedFile() file?: ShoppingAudioFile): Promise<{ text: string }> {
+    return transcribeShoppingAudio(file);
   }
 
   @Public()

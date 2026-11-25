@@ -296,6 +296,11 @@ export function createApiClient(options: ApiClientOptions) {
     suggestShoppingListings: (input: ShoppingConversation) => request<ShoppingSuggestions>("/v1/shopping-assistant/suggestions", {
       method: "POST", body: JSON.stringify(input)
     }),
+    transcribeShoppingAudio: (audio: Blob, signal?: AbortSignal) => {
+      const body = new FormData();
+      body.set("file", audio, "recording");
+      return request<{ text: string }>("/v1/shopping-assistant/transcription", { method: "POST", body, signal: signal ?? null });
+    },
     initCheckout: (input: CheckoutInitInput, key: string) => request<CommerceOrder>("/v1/checkout/init", {
       method: "POST", headers: { "Idempotency-Key": key }, body: JSON.stringify(input)
     }),

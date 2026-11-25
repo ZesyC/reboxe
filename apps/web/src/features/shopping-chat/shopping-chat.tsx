@@ -13,24 +13,15 @@ const api = createBrowserApiClient();
 const primaryButton = "inline-flex min-h-12 items-center justify-center bg-[var(--accent-strong)] px-5 py-2.5 font-semibold text-white hover:bg-[var(--ink)] disabled:opacity-50";
 const maxMessageLength = 500;
 
-type SpeechCapture = {
-  lang: string;
-  start: () => void;
-  stop: () => void;
-  abort: () => void;
-  onaudiostart: () => void;
-  onresult: (event: { results: SpeechRecognitionResultList; resultIndex: number }) => void;
-  onerror: (event: { error: string }) => void;
-  onend: () => void;
+type VoiceCapture = {
+  controller: AbortController;
+  stop?: () => void;
 };
 
-const noSpeechMessage = "Mình chưa nghe rõ. Bạn bấm Nói để thử lại nhé.";
+const audioTypes = ["audio/webm", "audio/ogg", "audio/mp4"];
 const voiceErrors: Partial<Record<string, string>> = {
-  "not-allowed": "Bạn hãy cho phép dùng micro trong trình duyệt hoặc nhập bằng bàn phím.",
-  "service-not-allowed": "Trình duyệt chưa cho phép nhận diện giọng nói. Bạn có thể nhập bằng bàn phím.",
-  "audio-capture": "Không tìm thấy micro. Bạn có thể nhập bằng bàn phím.",
-  "no-speech": noSpeechMessage,
-  network: "Chưa kết nối được dịch vụ nhận diện giọng nói. Bạn có thể thử lại hoặc gõ tin nhắn."
+  NotAllowedError: "Bạn hãy cho phép dùng micro trong trình duyệt hoặc nhập bằng bàn phím.",
+  NotFoundError: "Không tìm thấy micro. Bạn có thể nhập bằng bàn phím."
 };
 
 export function ShoppingChat({ open, initialListing, unavailable }: {
@@ -44,8 +35,8 @@ export function ShoppingChat({ open, initialListing, unavailable }: {
   const [suggestions, setSuggestions] = useState<ShoppingSuggestions>();
   const [error, setError] = useState(unavailable ? "Kiện bạn chọn hiện không còn bán. Bạn có thể tìm món khác bên dưới." : "");
   const [busy, setBusy] = useState(false);
-  const [voiceState, setVoiceState] = useState<"starting" | "listening" | "stopping">();
-  const speech = useRef<SpeechCapture>(null);
+  const [voiceState, setVoiceState] = useState<"starting" | "listening" | "transcribing">();
+  const speech = useRef<VoiceCapture>(null);
   const searching = useRef(false);
   const conversation = useRef<HTMLDivElement>(null);
 
@@ -59,63 +50,77 @@ export function ShoppingChat({ open, initialListing, unavailable }: {
       const capture = speech.current;
       if (!capture) return;
       speech.current = null;
-      capture.abort();
+      capture.controller.abort();
       setVoiceState(undefined);
     };
   }, [open, selected]);
 
-  function toggleVoiceInput() {
+  async function toggleVoiceInput() {
     if (speech.current) {
-      setVoiceState("stopping");
-      speech.current.stop();
+      speech.current.stop?.();
       return;
     }
-    const browser = window as Window & {
-      SpeechRecognition?: new () => SpeechCapture;
-      webkitSpeechRecognition?: new () => SpeechCapture;
-    };
-    const Recognition = browser.SpeechRecognition ?? browser.webkitSpeechRecognition;
-    if (!Recognition) {
+    const mimeType = typeof MediaRecorder !== "undefined" && audioTypes.find(type => MediaRecorder.isTypeSupported(type));
+    if (!navigator.mediaDevices?.getUserMedia || !mimeType) {
       setError("Trình duyệt này chưa hỗ trợ nhập bằng giọng nói. Bạn có thể nhập bằng bàn phím.");
       return;
     }
 
-    function finish() {
-      speech.current = null;
-      setVoiceState(undefined);
-    }
+    const capture: VoiceCapture = { controller: new AbortController() };
+    const { signal } = capture.controller;
+    speech.current = capture;
+    setError("");
+    setVoiceState("starting");
     try {
-      const capture = new Recognition();
-      let receivedText = false;
-      capture.lang = "vi-VN";
-      speech.current = capture;
-      setError("");
-      setVoiceState("starting");
-      capture.onaudiostart = () => {
-        if (speech.current === capture) setVoiceState((state) => state === "starting" ? "listening" : state);
-      };
-      capture.onresult = ({ results, resultIndex }) => {
-        if (speech.current !== capture) return;
-        const transcript = Array.from(results).slice(resultIndex)
-          .filter((result) => result.isFinal).map((result) => result[0]?.transcript.trim()).join(" ").trim();
-        if (!transcript) return;
-        receivedText = true;
-        setInput((draft) => [draft.trim(), transcript].filter(Boolean).join(" ").slice(0, maxMessageLength));
-      };
-      capture.onerror = ({ error }) => {
-        if (speech.current !== capture) return;
-        finish();
-        if (error !== "aborted") setError(voiceErrors[error] ?? "Chưa thể nhận diện giọng nói. Bạn có thể thử lại hoặc gõ tin nhắn.");
-      };
-      capture.onend = () => {
-        if (speech.current !== capture) return;
-        finish();
-        if (!receivedText) setError(noSpeechMessage);
-      };
-      capture.start();
-    } catch {
-      finish();
-      setError("Chưa thể bật micro. Bạn có thể thử lại hoặc gõ tin nhắn.");
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      let audio: Blob;
+      let timeout: number | undefined;
+      try {
+        if (signal.aborted) return;
+        const recorder = new MediaRecorder(stream, { mimeType, audioBitsPerSecond: 64_000 });
+        audio = await new Promise<Blob>((resolve, reject) => {
+          const chunks: Blob[] = [];
+          const stop = () => {
+            if (recorder.state === "inactive") return;
+            if (!signal.aborted) setVoiceState("transcribing");
+            recorder.stop();
+          };
+          capture.stop = stop;
+          recorder.ondataavailable = ({ data }) => { if (data.size) chunks.push(data); };
+          recorder.onstop = () => resolve(new Blob(chunks, { type: mimeType }));
+          recorder.onerror = () => reject(new Error("Microphone recording failed"));
+          recorder.start();
+          signal.addEventListener("abort", stop, { once: true });
+          timeout = window.setTimeout(stop, 30_000);
+          setVoiceState("listening");
+        });
+      } finally {
+        window.clearTimeout(timeout);
+        if (capture.stop) signal.removeEventListener("abort", capture.stop);
+        delete capture.stop;
+        stream.getTracks().forEach(track => track.stop());
+      }
+      if (signal.aborted) return;
+
+      setVoiceState("transcribing");
+      const text = audio.size ? (await api.transcribeShoppingAudio(audio, signal)).text : "";
+      if (signal.aborted) return;
+      if (text) {
+        setInput(draft => [draft.trim(), text].filter(Boolean).join(" ").slice(0, maxMessageLength));
+      } else {
+        setError("Mình chưa nghe rõ. Bạn bấm Nói để thử lại nhé.");
+      }
+    } catch (error) {
+      if (signal.aborted) return;
+      const message = error instanceof ApiClientError && error.status === 429
+        ? "Bạn đã dùng micro nhiều lần. Vui lòng chờ một chút rồi thử lại."
+        : error instanceof DOMException ? voiceErrors[error.name] : undefined;
+      setError(message ?? "Chưa thể nhận diện giọng nói. Bạn có thể thử lại hoặc gõ tin nhắn.");
+    } finally {
+      if (speech.current === capture) {
+        speech.current = null;
+        setVoiceState(undefined);
+      }
     }
   }
 
@@ -195,7 +200,7 @@ export function ShoppingChat({ open, initialListing, unavailable }: {
           {error && <p className="font-medium text-[var(--danger)]" role="alert">{error}</p>}
           {voiceState && <p className="font-medium text-[var(--accent-strong)]" role="status">
             {voiceState === "starting" ? "Nếu được hỏi, bạn hãy cho phép dùng micro."
-              : voiceState === "listening" ? "Đang nghe… Bạn cứ nói món mình muốn mua."
+              : voiceState === "listening" ? "Đang nghe… Bấm Dừng khi bạn nói xong."
               : "Đang chuyển lời nói thành chữ…"}
           </p>}
           <label className="sr-only" htmlFor="shopping-message">Bạn muốn mua gì?</label>
@@ -210,9 +215,10 @@ export function ShoppingChat({ open, initialListing, unavailable }: {
             placeholder="Nhập món cần mua…" required rows={2} value={input}
           />
           <div className="flex items-center justify-between gap-2">
-            <button aria-label={voiceState ? "Dừng nhập bằng giọng nói" : "Nói để nhập tin nhắn"}
+            <button aria-label={voiceState === "listening" ? "Dừng nhập bằng giọng nói" : "Nói để nhập tin nhắn"}
               className="min-h-12 min-w-14 shrink-0 rounded-full border border-[var(--line-strong)] bg-[var(--accent-soft)] px-2 font-semibold text-[var(--accent-strong)] hover:border-[var(--accent-strong)] disabled:opacity-50"
-              disabled={busy || voiceState === "stopping"} onClick={toggleVoiceInput} type="button">{voiceState ? "Dừng" : "Nói"}</button>
+              disabled={busy || voiceState === "starting" || voiceState === "transcribing"}
+              onClick={() => void toggleVoiceInput()} type="button">{voiceState === "listening" ? "Dừng" : "Nói"}</button>
             <button className={`${primaryButton} shrink-0 rounded-full`} disabled={busy || !!voiceState || !input.trim()} type="submit">Gửi</button>
           </div>
         </form>

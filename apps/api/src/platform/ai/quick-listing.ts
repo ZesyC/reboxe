@@ -1,6 +1,6 @@
 import { DomainError } from "@reboxe/backend";
 import { maxListingWeightGram, quickListingDraftSchema, type Category, type QuickListingConversation, type QuickListingSuggestion } from "@reboxe/shared";
-import { requestAnthropicJson } from "./anthropic";
+import { requestAiJson } from "./json-provider";
 
 const extractionInstructions = `Bạn trích thông tin cho đúng một tin đăng bán trên REBOXE. Trả về một object JSON, không markdown.
 Các trường cho phép: title (tên sản phẩm), description (thông tin sản phẩm bổ sung), categoryId, conditionGrade, conditionNotes (tình trạng và lỗi shop khai báo), price (số nguyên VND), weightGram (số nguyên gram).
@@ -13,19 +13,17 @@ export async function suggestQuickListing(
   conversation: QuickListingConversation,
   categories: Category[]
 ): Promise<QuickListingSuggestion> {
-  let draft: QuickListingSuggestion["draft"];
-  let weightTooHeavy = false;
-  try {
-    const fields = await requestAnthropicJson(extractionInstructions, { ...conversation, categories }) as { weightGram?: unknown } | null;
+  const { draft, weightTooHeavy } = await requestAiJson(extractionInstructions, { ...conversation, categories }, (output) => {
+    const fields = output as { weightGram?: unknown } | null;
+    let weightTooHeavy = false;
     if (typeof fields?.weightGram === "number" && Number.isSafeInteger(fields.weightGram) && fields.weightGram > maxListingWeightGram) {
       weightTooHeavy = true;
       delete fields.weightGram;
     }
-    draft = quickListingDraftSchema.parse(fields);
-  } catch (error) {
-    if (error instanceof DomainError) throw error;
-    throw new DomainError("AI_UNAVAILABLE", 503, "Listing assistant is temporarily unavailable");
-  }
+    const result = quickListingDraftSchema.safeParse(fields);
+    if (!result.success) throw new DomainError("AI_UNAVAILABLE", 503, "Listing assistant is temporarily unavailable");
+    return { draft: result.data, weightTooHeavy };
+  });
 
   if (!categories.some(category => category.id === draft.categoryId)) delete draft.categoryId;
   const question = weightTooHeavy

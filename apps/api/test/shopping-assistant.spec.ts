@@ -36,6 +36,7 @@ describe("shopping assistant", () => {
     vi.stubEnv("ANTHROPIC_API_KEY", "test-key");
     vi.stubEnv("ANTHROPIC_BASE_URL", "https://ai.example.test");
     vi.stubEnv("ANTHROPIC_MODEL", "test-model");
+    vi.stubEnv("GROQ_API_KEY", "");
   });
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -74,5 +75,26 @@ describe("shopping assistant", () => {
     const fetch = provider({ queries: ["quạt"], categoryId: null, maxPriceVnd: null });
     await expect(suggestShoppingListings(turn, catalog())).resolves.toEqual({ listings: [], needsProductDetails: false });
     expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("plans and ranks with Groq when Anthropic is unconfigured", async () => {
+    vi.stubEnv("ANTHROPIC_API_KEY", "");
+    vi.stubEnv("GROQ_API_KEY", "groq-test-key");
+    const match = listing("fan-1", 190_000, 1);
+    const fetchMock = vi.fn<typeof fetch>();
+    for (const output of [{ queries: ["quạt"], categoryId: null, maxPriceVnd: 300_000 }, { listingIds: [match.id] }]) {
+      fetchMock.mockResolvedValueOnce(Response.json({
+        choices: [{ finish_reason: "stop", message: { content: JSON.stringify(output) } }]
+      }));
+    }
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(suggestShoppingListings(turn, catalog([match])))
+      .resolves.toEqual({ listings: [match], needsProductDetails: false });
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual(Array(2).fill("https://api.groq.com/openai/v1/chat/completions"));
+    for (const [, request] of fetchMock.mock.calls) {
+      const body = JSON.parse(String(request?.body));
+      expect(JSON.parse(body.messages[1].content).messages[1]).toBe("Dưới 300k và số của tôi là [số điện thoại]");
+    }
   });
 });
