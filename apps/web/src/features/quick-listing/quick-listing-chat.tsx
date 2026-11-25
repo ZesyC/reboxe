@@ -116,7 +116,10 @@ export function QuickListingChat({ shopId, categories }: { shopId: string; categ
     setPendingTurn(turn);
     try {
       const past = textTurns.map((item, index) => ({ message: item.message, question: textTurns[index - 1]?.reply }));
-      const result = await api.suggestQuickListing(shopId, { turns: [...past, { message: turn.message, question: textTurns.at(-1)?.reply }] });
+      const result = await api.suggestQuickListing(shopId, {
+        turns: [...past, { message: turn.message, question: textTurns.at(-1)?.reply }],
+        previousDraft: suggestion?.draft
+      });
       setTurns(current => [...current, { ...turn, reply: result.question ?? undefined }]);
       setSuggestion(result);
       setMessage("");

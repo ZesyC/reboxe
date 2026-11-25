@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { quickListingConversationSchema } from "@reboxe/shared";
 import { suggestQuickListing } from "../src/platform/ai/quick-listing";
 
 const turns = [{ message: "Bán đầm hoa 140k, trước mua 250k. Đã mặc vài lần." }];
@@ -47,6 +48,43 @@ describe("quick listing assistant", () => {
     const body = JSON.parse(String(request?.body));
     expect(body.model).toBe("test-model");
     expect(JSON.parse(body.messages[0].content)).toEqual({ ...conversation, categories });
+  });
+
+  it("keeps the product when Groq only returns the newly stated price", async () => {
+    vi.stubEnv("ANTHROPIC_API_KEY", "");
+    vi.stubEnv("GROQ_API_KEY", "groq-test-key");
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValueOnce(Response.json({
+      choices: [{ finish_reason: "stop", message: { content: '{"price":2000000}' } }]
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+    const conversation = {
+      previousDraft: { title: "Điện thoại", categoryId: "used-electronics" },
+      turns: [
+        { message: "t cần bán điện thoại này" },
+        { question: "Bạn muốn đăng giá bao nhiêu?", message: "2tr" }
+      ]
+    };
+    const electronics = [{ id: "used-electronics", name: "Đồ điện tử đã qua sử dụng" }];
+
+    await expect(suggestQuickListing(quickListingConversationSchema.parse(conversation), electronics)).resolves.toEqual({
+      draft: { ...conversation.previousDraft, price: 2_000_000 },
+      question: "Món này còn mới hay đã qua sử dụng? Có lỗi hoặc thiếu gì không?"
+    });
+    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    expect(JSON.parse(body.messages[1].content).previousDraft).toEqual(conversation.previousDraft);
+  });
+
+  it("lets the seller retract and replace information in an existing draft", async () => {
+    const conversation = {
+      previousDraft: draft,
+      turns: [...turns, { message: "Mình ghi nhầm, đầm sọc nhé. Giá thì chưa chốt." }]
+    };
+    mockMessage({ title: "Đầm sọc", clearFields: ["price"] });
+
+    await expect(suggestQuickListing(conversation, categories)).resolves.toEqual({
+      draft: { title: "Đầm sọc", categoryId: "fashion", conditionGrade: "FAIR", conditionNotes: "Đã mặc vài lần" },
+      question: "Bạn muốn đăng giá bao nhiêu?"
+    });
   });
 
   it("keeps the draft and asks for a corrected weight after a 200 OK response with 200 kg", async () => {
