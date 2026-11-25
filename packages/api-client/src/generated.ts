@@ -3523,7 +3523,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Up to three matching purchasable listings in ranked order */
+            /** @description Up to three matching public listings in ranked order */
             201: {
                 headers: {
                     [name: string]: unknown;

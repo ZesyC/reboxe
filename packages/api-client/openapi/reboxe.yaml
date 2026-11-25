@@ -1416,7 +1416,7 @@ paths:
                   items: { type: string, minLength: 1, maxLength: 500 }
       responses:
         "201":
-          description: Up to three matching purchasable listings in ranked order
+          description: Up to three matching public listings in ranked order
           content:
             application/json:
               schema:

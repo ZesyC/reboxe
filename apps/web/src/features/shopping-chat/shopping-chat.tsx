@@ -148,8 +148,8 @@ export function ShoppingChat({ open, initialListing, unavailable }: {
 
   const reply = !suggestions ? "Chào bạn! Bạn đang muốn mua món gì?"
     : suggestions.needsProductDetails ? "Bạn muốn tìm món gì? Bạn có thể nói thêm tên món, công dụng hoặc khoảng giá."
-    : suggestions.listings.length === 0 ? "Mình chưa tìm được kiện phù hợp. Bạn có thể thử tên gọi khác hoặc đổi khoảng giá."
-    : `Mình tìm được ${suggestions.listings.length} kiện phù hợp. Bạn có thể xem chi tiết rồi bấm Mua.`;
+    : suggestions.listings.length === 0 ? "Mình chưa tìm được sản phẩm phù hợp. Bạn có thể thử tên gọi khác hoặc đổi khoảng giá."
+    : `Mình tìm được ${suggestions.listings.length} sản phẩm phù hợp.`;
 
   return (
     <section aria-label="Cuộc trò chuyện mua hàng" className="flex min-h-0 flex-1 flex-col text-lg">
@@ -170,16 +170,18 @@ export function ShoppingChat({ open, initialListing, unavailable }: {
               <p className="max-w-[90%] justify-self-start rounded-xl rounded-bl-sm border border-[var(--line)] bg-white px-4 py-3 text-xl leading-relaxed"><span className="sr-only">Trợ lý: </span>{busy ? "Mình đang tìm hàng phù hợp…" : reply}</p>
             </div>
             {suggestions && suggestions.listings.length > 0 && !busy && (
-              <ul aria-label="Các kiện được gợi ý" className="grid gap-3">
+              <ul aria-label="Sản phẩm được gợi ý" className="grid gap-3">
                 {suggestions.listings.map((listing) => (
                   <li className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 gap-y-2 rounded-xl border border-[var(--line)] bg-white p-3" key={listing.id}>
                     <ProductVisual className="size-16 bg-[var(--accent-soft)]" label={listing.images[0]?.url ? listing.title : ""} src={listing.images[0]?.url ?? undefined} />
                     <div className="min-w-0">
                       <Link className="break-words text-xl font-semibold underline decoration-[var(--line-strong)] underline-offset-2 hover:text-[var(--accent-strong)]" href={`/listings/${listing.id}`} target="_blank">{listing.title}<span className="sr-only"> (mở tab mới)</span></Link>
-                      <p className="text-base text-[var(--muted)]">Kiện chưa mở kiểm tra</p>
+                      {listing.package && <p className="text-base text-[var(--muted)]">Kiện chưa mở kiểm tra</p>}
                       <p className="mt-1 text-xl font-bold text-[var(--accent-strong)]">{formatPrice(listing.price)}</p>
                     </div>
-                    <button aria-label={`Mua ${listing.title}`} className={`${primaryButton} col-span-2 justify-self-end rounded-lg`} onClick={() => setSelected(listing)} type="button">Mua</button>
+                    {listing.package && listing.availableQuantity === 1
+                      ? <button aria-label={`Mua ${listing.title}`} className={`${primaryButton} col-span-2 justify-self-end rounded-lg`} onClick={() => setSelected(listing)} type="button">Mua</button>
+                      : <p className="col-start-2 text-sm text-[var(--muted)]">Chưa thể đặt qua chat</p>}
                   </li>
                 ))}
               </ul>

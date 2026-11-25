@@ -418,6 +418,12 @@ describe("Sprint 1 PostgreSQL vertical slice", () => {
     expect(page.items.map((listing) => listing.id)).not.toContain(draft.id);
     expect(page.items.map((listing) => listing.id)).not.toContain(inactiveShopListing.id);
     expect(page.items.find((listing) => listing.id === active.id)).not.toHaveProperty("weightGram");
+
+    const shoppingPage = await inventory.listPublicListings({ q: "vay lua", sort: "newest" }, { maxPriceVnd: undefined });
+    const shoppingIds = shoppingPage.items.map((listing) => listing.id);
+    expect(shoppingIds).toContain(active.id);
+    expect(shoppingIds).not.toContain(draft.id);
+    expect(shoppingIds).not.toContain(inactiveShopListing.id);
   });
 
   it("rejects a malformed or wrong-sort catalog cursor", async () => {
