@@ -52,7 +52,7 @@ export default function ProfilePage() {
         setProfile({
           username,
           email,
-          phone: data.user.phone ?? "",
+          phone: data.user.phone || metadataString(metadata, "phone"),
           fullName: metadataString(metadata, "full_name") || kyc?.identity.fullName || username,
           gender: metadataString(metadata, "gender") || kyc?.identity.gender || "",
           birthday: metadataString(metadata, "date_of_birth") || kyc?.identity.dateOfBirth || "",

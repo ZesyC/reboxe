@@ -410,7 +410,16 @@ export function PersonalInformation() {
         const owner = actor.shops.find((shop) => shop.role === "OWNER" && shop.kycId);
         const kyc = owner?.kycId ? await api.getKycStatus(owner.kycId) : undefined;
         const metadata = (auth.user?.user_metadata ?? {}) as Record<string, unknown>;
-        setData({ email: auth.user?.email ?? "", phone: auth.user?.phone ?? "", fullName: String(metadata.full_name ?? kyc?.identity.fullName ?? ""), citizenId: kyc?.identity.citizenId ?? "", dateOfBirth: kyc?.identity.dateOfBirth ?? String(metadata.date_of_birth ?? ""), gender: kyc?.identity.gender ?? String(metadata.gender ?? ""), address: kyc?.identity.address ?? "", status: kyc?.kycStatus ?? "Chưa xác minh" });
+        setData({
+          email: auth.user?.email ?? "",
+          phone: auth.user?.phone || String(metadata.phone ?? ""),
+          fullName: String(metadata.full_name ?? kyc?.identity.fullName ?? ""),
+          citizenId: kyc?.identity.citizenId ?? String(metadata.citizen_id ?? ""),
+          dateOfBirth: kyc?.identity.dateOfBirth ?? String(metadata.date_of_birth ?? ""),
+          gender: kyc?.identity.gender ?? String(metadata.gender ?? ""),
+          address: kyc?.identity.address ?? String(metadata.address ?? ""),
+          status: kyc?.kycStatus ?? "Chưa xác minh"
+        });
       } catch { setError("Không thể tải thông tin cá nhân."); }
     })();
   }, []);

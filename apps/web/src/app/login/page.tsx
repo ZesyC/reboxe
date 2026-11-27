@@ -20,8 +20,10 @@ export default function LoginPage() {
     setError(undefined);
 
     try {
+      const identifier = String(data.get("email")).trim();
+      const email = identifier.includes("@") ? identifier : `${identifier.toLowerCase()}@reboxe.demo`;
       const { error: authError } = await getSupabaseBrowserClient().auth.signInWithPassword({
-        email: String(data.get("email")).trim(),
+        email,
         password: String(data.get("password"))
       });
       if (authError) {
@@ -45,7 +47,7 @@ export default function LoginPage() {
           <div className="flex items-center justify-between gap-2 pb-1">
             <h2 className="text-[22px] font-semibold text-[var(--ink)]">Đăng nhập</h2>
           </div>
-          <AuthField autoComplete="email" label="Email" name="email" placeholder="Email" required type="email" />
+          <AuthField autoComplete="username" label="Email" name="email" placeholder="Email hoặc tên đăng nhập" required type="text" />
           <AuthField autoComplete="current-password" label="Mật khẩu" name="password" placeholder="Mật khẩu" required type="password" />
           <div className="flex justify-end">
             <Link className="inline-flex min-h-9 items-center text-[13px] font-medium text-[var(--accent)] hover:underline" href="/forgot-password">Quên mật khẩu?</Link>
