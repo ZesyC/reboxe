@@ -1,19 +1,21 @@
 import { ApiClientError } from "@reboxe/api-client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
 import { CartActions } from "../../../../features/cart-actions";
 import { conditionLabels, formatPrice, nameInitials, sealStatusLabels } from "../../../../features/commerce-data";
 import { ReboxeBadge } from "../../../../features/commerce-ui";
+import { parseListingDescription } from "../../../../features/listing-description";
 import { ListingGallery } from "../../../../features/listing-gallery";
 import { ProductCard } from "../../../../features/product-card";
 import { SiteStatus } from "../../../../features/site-status";
 import { createPublicApiClient } from "../../../../platform/api/server";
 
-function DetailRow({ label, value }: { label: string; value: string }) {
+function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="grid grid-cols-1 gap-1 text-sm leading-5 sm:grid-cols-[150px_1fr] sm:gap-4">
+    <div className="grid grid-cols-1 gap-1 text-sm leading-5 sm:grid-cols-[180px_1fr] sm:gap-4">
       <dt className="text-[var(--muted)]">{label}</dt>
-      <dd>{value}</dd>
+      <dd className="text-[var(--ink)]">{value}</dd>
     </div>
   );
 }
@@ -38,6 +40,15 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   const categoryName = categories.find((category) => category.id === listing.categoryId)?.name ?? listing.categoryId;
   const conditionName = listing.package ? "Kiện chưa mở kiểm tra" : conditionLabels[listing.conditionGrade];
   const shopInitials = nameInitials(listing.shopDisplayName);
+
+  const { extraSpecs, body } = parseListingDescription(listing.description, listing.conditionNotes);
+  const extraSpecKeys = new Set(extraSpecs.map((spec) => spec.label.toLowerCase()));
+  const brands = [...new Set(listing.package?.lines.map((line) => line.brand).filter((v): v is string => Boolean(v)) ?? [])];
+  const variants = [...new Set(listing.package?.lines.map((line) => line.variantName).filter((v): v is string => Boolean(v)) ?? [])];
+  const originalReferenceTotal = listing.package?.lines.reduce(
+    (sum, line) => sum + (line.originalUnitPriceVnd ?? 0) * line.quantity,
+    0
+  ) ?? 0;
 
   return (
     <main className="bg-[var(--paper)] px-4 pb-9 pt-5 sm:px-6">
@@ -114,8 +125,52 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
         </section>
 
         <section className="mt-6 rounded-[10px] border border-[var(--line)] bg-white p-5 sm:p-6">
-          <h2 className="border-b border-[var(--line)] pb-3 text-base font-semibold">MÔ TẢ SẢN PHẨM</h2>
-          <p className="mt-4 max-w-[75ch] text-pretty text-sm leading-6">{listing.description ?? listing.conditionNotes}</p>
+          <h2 className="rounded bg-[var(--paper)] px-4 py-3 text-base font-semibold uppercase tracking-wide text-[var(--ink)]">CHI TIẾT SẢN PHẨM</h2>
+          <dl className="mt-4 grid gap-3.5 px-2 sm:px-4">
+            <DetailRow
+              label="Danh Mục"
+              value={
+                <span className="inline-flex flex-wrap items-center gap-1.5">
+                  <Link className="text-[var(--accent)] hover:underline" href="/">REBOXE</Link>
+                  <span aria-hidden className="text-[var(--muted)]">&gt;</span>
+                  <Link className="text-[var(--accent)] hover:underline" href={`/search?category=${encodeURIComponent(listing.categoryId)}`}>{categoryName}</Link>
+                </span>
+              }
+            />
+            <DetailRow
+              label="Số sản phẩm còn lại"
+              value={listing.availableQuantity === 0 ? "HẾT HÀNG" : listing.package ? "CÒN HÀNG (1 kiện)" : "CÒN HÀNG"}
+            />
+            {brands.length > 0 && !extraSpecKeys.has("thương hiệu") ? (
+              <DetailRow label="Thương hiệu" value={brands.join(", ")} />
+            ) : null}
+            {variants.length > 0 && !extraSpecKeys.has("phân loại") ? (
+              <DetailRow label="Phân loại" value={variants.join(" · ")} />
+            ) : null}
+            <DetailRow label={listing.package ? "Công bố kiện" : "Tình trạng"} value={conditionName} />
+            {listing.package ? (
+              <>
+                <DetailRow label="Tình trạng vỏ kiện" value={sealStatusLabels[listing.package.sealStatus]} />
+                <DetailRow
+                  label="Số lượng theo bản kê"
+                  value={`${listing.package.manifestSummary.lineCount} dòng · ${listing.package.manifestSummary.unitCount} sản phẩm`}
+                />
+                {originalReferenceTotal > 0 ? (
+                  <DetailRow label="Giá gốc tham khảo" value={formatPrice(originalReferenceTotal)} />
+                ) : null}
+              </>
+            ) : null}
+            {extraSpecs.map((spec) => (
+              <DetailRow key={spec.label} label={spec.label} value={spec.value} />
+            ))}
+            <DetailRow label="Gửi từ" value={shop?.location ?? "TP. Hồ Chí Minh"} />
+            <DetailRow label="Đăng bán lúc" value={new Date(listing.publishedAt ?? listing.createdAt).toLocaleString("vi-VN")} />
+          </dl>
+
+          <h2 className="mt-8 rounded bg-[var(--paper)] px-4 py-3 text-base font-semibold uppercase tracking-wide text-[var(--ink)]">MÔ TẢ SẢN PHẨM</h2>
+          <div className="mt-4 max-w-[78ch] whitespace-pre-line px-2 text-sm leading-7 text-[var(--ink)] sm:px-4">
+            {body}
+          </div>
         </section>
 
         {listing.package ? (
