@@ -2381,6 +2381,9 @@ components:
                   quantity: { type: integer, minimum: 1 }
                   categoryId: { type: string }
                   originalUnitPriceVnd: { anyOf: [{ type: integer, minimum: 1 }, { type: "null" }] }
+                  imageUrls:
+                    type: array
+                    items: { type: string }
     ScanReturnPackage:
       type: object
       additionalProperties: false

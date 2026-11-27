@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CartActions } from "../../../../features/cart-actions";
 import { conditionLabels, formatPrice, nameInitials, sealStatusLabels } from "../../../../features/commerce-data";
-import { ProductVisual, ReboxeBadge } from "../../../../features/commerce-ui";
+import { ReboxeBadge } from "../../../../features/commerce-ui";
+import { ListingGallery } from "../../../../features/listing-gallery";
 import { ProductCard } from "../../../../features/product-card";
 import { SiteStatus } from "../../../../features/site-status";
 import { createPublicApiClient } from "../../../../platform/api/server";
@@ -50,15 +51,11 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
         </nav>
 
         <section className="mt-3 grid gap-8 rounded-[10px] border border-[var(--line)] bg-white p-5 sm:p-6 xl:min-h-[500px] xl:grid-cols-[500px_1fr]">
-          {listing.images[0] ? (
-            <img alt={listing.title} className="h-[320px] w-full rounded-[10px] bg-[var(--paper)] object-contain sm:h-[430px]" decoding="async" src={listing.images[0].url} />
-          ) : (
-            <ProductVisual
-              className="h-[320px] w-full rounded-[10px] bg-[linear-gradient(139deg,var(--accent-strong)_14%,#7ea8df_86%)] sm:h-[430px]"
-              label={categoryName.toUpperCase()}
-              labelClassName="text-3xl sm:text-[44px]"
-            />
-          )}
+          <ListingGallery
+            fallbackLabel={categoryName.toUpperCase()}
+            images={listing.images}
+            title={listing.title}
+          />
 
           <div className="flex flex-col gap-4">
             <ReboxeBadge className="w-fit">{conditionName}</ReboxeBadge>
@@ -127,9 +124,20 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             <p className="mt-3 text-xs text-[var(--muted)]">Thông tin khai báo từ sàn nguồn; REBOXE và người bán chưa mở kiện kiểm đếm thực tế.</p>
             <ul className="mt-4 space-y-3">
               {listing.package.lines.map((line, index) => (
-                <li className="rounded-lg border border-[var(--line)] p-3.5" key={`${line.productName}-${index}`}>
-                  <strong className="text-sm">{line.productName}</strong>
-                  <p className="mt-1 text-sm text-[var(--muted)]">{line.variantName ?? "Không có phân loại"} · SL khai báo {line.quantity}</p>
+                <li className="flex items-center gap-3.5 rounded-lg border border-[var(--line)] p-3.5" key={`${line.productName}-${index}`}>
+                  {line.imageUrls?.[0] ? (
+                    <img
+                      alt={line.productName}
+                      className="size-16 shrink-0 rounded-lg border border-[var(--line)] bg-[var(--paper)] object-cover sm:size-20"
+                      decoding="async"
+                      loading="lazy"
+                      src={line.imageUrls[0]}
+                    />
+                  ) : null}
+                  <div className="min-w-0">
+                    <strong className="text-sm">{line.productName}</strong>
+                    <p className="mt-1 text-sm text-[var(--muted)]">{line.variantName ?? "Không có phân loại"} · SL khai báo {line.quantity}</p>
+                  </div>
                 </li>
               ))}
             </ul>

@@ -32,6 +32,11 @@ const pool = new Pool({
   ssl: process.env.PGSSLMODE === "require" ? { rejectUnauthorized: false } : undefined
 });
 
+const obsoleteFiles = [
+  "demo-products/phone-case-bundle.webp",
+  "demo-products/floral-dress.webp"
+];
+
 const products = [
   {
     id: "RBX-DEMO-NB1-001",
@@ -48,7 +53,6 @@ const products = [
     conditionNotes: "Hộp ngoài nguyên seal, góc vỏ giấy hơi trầy nhẹ khi vận chuyển hoàn.",
     priceVnd: 49000,
     weightGram: 95,
-    imageFiles: ["phone-case-silicone.webp"],
     lines: [
       {
         sku: "CASE-IP15P-SIL-BLK",
@@ -59,7 +63,8 @@ const products = [
         categoryId: "accessories",
         quantity: 1,
         originalUnitPriceVnd: 129000,
-        returnReason: "Khách đặt nhầm dòng máy"
+        returnReason: "Khách đặt nhầm dòng máy",
+        imageFile: "phone-case-silicone.webp"
       }
     ]
   },
@@ -71,36 +76,37 @@ const products = [
     sourceOrderRef: "SPX-2611-0002",
     sourceReturnRef: "RET-2611-0002",
     sealStatus: "INTACT",
-    title: "Kiện hoàn 3 món phụ kiện iPhone: 2 ốp lưng da + 1 ví đựng thẻ",
+    title: "Kiện hoàn 3 món phụ kiện điện thoại: 2 ốp lưng trắng + 1 ví da đựng thẻ",
     description: "Đơn hoàn gồm nhiều phụ kiện từ cùng một đơn hàng do khách đổi ý không nhận, nguyên kiện chưa mở kiểm đếm.",
     categoryId: "accessories",
     conditionGrade: "LIKE_NEW_99",
     conditionNotes: "Kiện hoàn nguyên đai nguyên kiện từ kho vận chuyển, chưa bóc kiểm tra bên trong.",
     priceVnd: 89000,
     weightGram: 210,
-    imageFiles: ["phone-case-bundle.webp"],
     lines: [
       {
-        sku: "CASE-LEATHER-BRN",
-        productName: "Ốp lưng da vân cá sấu chống sốc iPhone 14/15 Pro",
-        variantName: "Nâu da bò",
-        brand: "GentleCase",
+        sku: "CASE-WHITE-PRO",
+        productName: "Ốp lưng bảo vệ gập trắng tối giản iPhone 14/15",
+        variantName: "Trắng tối giản",
+        brand: "MinimalCase",
         sourceCategory: "Phụ kiện điện thoại",
         categoryId: "accessories",
         quantity: 2,
         originalUnitPriceVnd: 75000,
-        returnReason: "Đổi ý trước khi nhận hàng"
+        returnReason: "Đổi ý trước khi nhận hàng",
+        imageFile: "phone-case-white.webp"
       },
       {
-        sku: "WALLET-MAG-BLK",
-        productName: "Ví đựng thẻ da gắn mặt lưng MagSafe",
-        variantName: "Đen tuyền",
-        brand: "GentleCase",
+        sku: "WALLET-LEATHER-BLK",
+        productName: "Ví da gập nhỏ gọn đựng thẻ cá nhân",
+        variantName: "Đen vân da",
+        brand: "MinimalCase",
         sourceCategory: "Phụ kiện điện thoại",
         categoryId: "accessories",
         quantity: 1,
-        originalUnitPriceVnd: 69000,
-        returnReason: "Đổi ý trước khi nhận hàng"
+        originalUnitPriceVnd: 89000,
+        returnReason: "Đổi ý trước khi nhận hàng",
+        imageFile: "leather-cardholder.webp"
       }
     ]
   },
@@ -119,7 +125,6 @@ const products = [
     conditionNotes: "Bao bì ngoài có vết gấp nhẹ ở mép túi giao hàng, tem niêm phong còn nguyên.",
     priceVnd: 129000,
     weightGram: 260,
-    imageFiles: ["phone-case-accessory.webp"],
     lines: [
       {
         sku: "FLIP-CASE-BLK",
@@ -130,18 +135,20 @@ const products = [
         categoryId: "accessories",
         quantity: 2,
         originalUnitPriceVnd: 95000,
-        returnReason: "Giao hàng không thành công"
+        returnReason: "Giao hàng không thành công",
+        imageFile: "phone-case-accessory.webp"
       },
       {
         sku: "CABLE-USBC-15M",
         productName: "Cáp sạc nhanh Type-C bọc dù dài 1.5m",
-        variantName: "Xám bạc",
+        variantName: "Đen bọc dù",
         brand: null,
         sourceCategory: "Cáp & Sạc",
         categoryId: "accessories",
         quantity: 1,
         originalUnitPriceVnd: 89000,
-        returnReason: "Giao hàng không thành công"
+        returnReason: "Giao hàng không thành công",
+        imageFile: "cable.webp"
       }
     ]
   },
@@ -160,7 +167,6 @@ const products = [
     conditionNotes: "Túi zip bọc áo còn nguyên vẹn, chưa mở kiểm tra sản phẩm bên trong.",
     priceVnd: 165000,
     weightGram: 320,
-    imageFiles: ["linen-shirt.webp", "white-shirts-hanger.webp"],
     lines: [
       {
         sku: "SHIRT-LINEN-CRM-L",
@@ -171,7 +177,8 @@ const products = [
         categoryId: "fashion",
         quantity: 1,
         originalUnitPriceVnd: 320000,
-        returnReason: "Đổi kích cỡ"
+        returnReason: "Đổi kích cỡ",
+        imageFile: "linen-shirt.webp"
       }
     ]
   },
@@ -183,25 +190,25 @@ const products = [
     sourceOrderRef: "TTK-2611-0005",
     sourceReturnRef: "RET-2611-0005",
     sealStatus: "INTACT",
-    title: "Váy midi đỏ dáng xòe cổ V thắt eo mùa hè",
-    description: "Kiện hoàn váy nữ dáng xòe màu đỏ rực rỡ, khách hoàn đơn do trùng dịp sự kiện đã qua.",
+    title: "Áo khoác kimono họa tiết thổ cẩm kèm áo dệt kim",
+    description: "Kiện hoàn trang phục nữ phong cách boutique trưng bày móc treo, hoàn đơn do giao chậm hơn lịch dự kiến.",
     categoryId: "fashion",
     conditionGrade: "LIKE_NEW_99",
     conditionNotes: "Kiện hàng còn nguyên túi niêm phong của shop, chưa bóc kiểm đếm lại.",
     priceVnd: 189000,
     weightGram: 390,
-    imageFiles: ["floral-dress.webp"],
     lines: [
       {
-        sku: "DRESS-RED-MIDI-M",
-        productName: "Váy midi sát nách cổ V kèm đai thắt eo",
-        variantName: "Size M · Đỏ tươi",
+        sku: "KIMONO-BOHO-M",
+        productName: "Áo khoác kimono họa tiết thổ cẩm dáng suông",
+        variantName: "Size M · Họa tiết cổ điển",
         brand: "Nàng Thơ Studio",
-        sourceCategory: "Váy / Đầm",
+        sourceCategory: "Áo kiểu / Váy",
         categoryId: "fashion",
         quantity: 1,
         originalUnitPriceVnd: 380000,
-        returnReason: "Giao chậm hơn lịch dự kiến"
+        returnReason: "Giao chậm hơn lịch dự kiến",
+        imageFile: "boutique-dress.webp"
       }
     ]
   },
@@ -220,7 +227,6 @@ const products = [
     conditionNotes: "Vỏ bọc ngoài hơi nhăn ở góc nhưng niêm phong kiện hàng vẫn còn nguyên.",
     priceVnd: 239000,
     weightGram: 640,
-    imageFiles: ["denim-jeans.webp"],
     lines: [
       {
         sku: "JEANS-STRAIGHT-28",
@@ -231,7 +237,8 @@ const products = [
         categoryId: "fashion",
         quantity: 1,
         originalUnitPriceVnd: 450000,
-        returnReason: "Khách đặt nhầm size"
+        returnReason: "Khách đặt nhầm size",
+        imageFile: "denim-jeans.webp"
       }
     ]
   },
@@ -250,7 +257,6 @@ const products = [
     conditionNotes: "Hộp carton ngoài móp nhẹ một góc, lớp bọc bảo vệ sản phẩm còn nguyên.",
     priceVnd: 289000,
     weightGram: 520,
-    imageFiles: ["beige-handbag.webp"],
     lines: [
       {
         sku: "BAG-CROC-BEIGE",
@@ -261,7 +267,8 @@ const products = [
         categoryId: "accessories",
         quantity: 1,
         originalUnitPriceVnd: 540000,
-        returnReason: "Khách đổi sang màu đen"
+        returnReason: "Khách đổi sang màu đen",
+        imageFile: "beige-handbag.webp"
       }
     ]
   },
@@ -280,7 +287,6 @@ const products = [
     conditionNotes: "Kiện hàng lớn còn nguyên tem vận chuyển hoàn và túi đóng gói ban đầu.",
     priceVnd: 359000,
     weightGram: 1120,
-    imageFiles: ["bundle-tees-jeans.webp", "denim-jeans.webp", "folded-shirts-stack.webp"],
     lines: [
       {
         sku: "TEE-BOXY-250-WHT",
@@ -291,7 +297,8 @@ const products = [
         categoryId: "fashion",
         quantity: 2,
         originalUnitPriceVnd: 189000,
-        returnReason: "Người mua hoàn toàn bộ đơn"
+        returnReason: "Người mua hoàn toàn bộ đơn",
+        imageFile: "bundle-tees-jeans.webp"
       },
       {
         sku: "JEANS-MEN-SLIM-31",
@@ -302,7 +309,8 @@ const products = [
         categoryId: "fashion",
         quantity: 1,
         originalUnitPriceVnd: 420000,
-        returnReason: "Người mua hoàn toàn bộ đơn"
+        returnReason: "Người mua hoàn toàn bộ đơn",
+        imageFile: "denim-jeans.webp"
       }
     ]
   },
@@ -314,14 +322,13 @@ const products = [
     sourceOrderRef: "TTK-2611-0009",
     sourceReturnRef: "RET-2611-0009",
     sealStatus: "INTACT",
-    title: "Kiện hoàn 3 món thu đông: 2 áo len dệt kim + 1 khăn choàng",
-    description: "Đơn hoàn gồm 2 áo len dày dặn và 1 khăn choàng dệt thoi cùng đơn mua, giữ nguyên kiện đóng gói từ shop.",
+    title: "Kiện hoàn 3 món thu đông: 2 áo len dệt kim + 1 khăn choàng len",
+    description: "Đơn hoàn gồm 2 áo len dày dặn và 1 khăn choàng len dệt đan cùng đơn mua, giữ nguyên kiện đóng gói từ shop.",
     categoryId: "fashion",
     conditionGrade: "LIKE_NEW_99",
     conditionNotes: "Túi bọc kiện còn nguyên vẹn, chưa cắt niêm phong để kiểm đếm từng món.",
     priceVnd: 389000,
     weightGram: 1250,
-    imageFiles: ["knitwear-bundle.webp"],
     lines: [
       {
         sku: "KNIT-SWEATER-BRN-CRM",
@@ -332,18 +339,20 @@ const products = [
         categoryId: "fashion",
         quantity: 2,
         originalUnitPriceVnd: 245000,
-        returnReason: "Khách hủy đơn sau khi đã gửi vận chuyển"
+        returnReason: "Khách hủy đơn sau khi đã gửi vận chuyển",
+        imageFile: "knitwear-bundle.webp"
       },
       {
-        sku: "SCARF-WOVEN-TEAL",
-        productName: "Khăn choàng cổ tua rua vải dệt mềm",
-        variantName: "Xanh cổ vịt",
+        sku: "SCARF-WOOL-PRP",
+        productName: "Khăn choàng cổ len đan thủ công giữ ấm",
+        variantName: "Tím hoa cà",
         brand: "Nordic Knit",
         sourceCategory: "Phụ kiện mùa đông",
         categoryId: "accessories",
         quantity: 1,
         originalUnitPriceVnd: 150000,
-        returnReason: "Khách hủy đơn sau khi đã gửi vận chuyển"
+        returnReason: "Khách hủy đơn sau khi đã gửi vận chuyển",
+        imageFile: "woven-scarf.webp"
       }
     ]
   },
@@ -362,18 +371,18 @@ const products = [
     conditionNotes: "Thùng carton chèn xốp còn nguyên băng keo niêm phong, chưa mở kiểm tra.",
     priceVnd: 399000,
     weightGram: 1380,
-    imageFiles: ["ceramic-mug-set.webp"],
     lines: [
       {
         sku: "MUG-CERAMIC-WHT-2",
-        productName: "Ly sứ dày giữ nhiệt uống espresso",
-        variantName: "90ml · Trắng sứ",
+        productName: "Ly sứ dày kèm đĩa lót uống espresso",
+        variantName: "90ml · Trắng viền xanh",
         brand: "CafeHome",
         sourceCategory: "Ly & Cốc",
         categoryId: "home",
         quantity: 2,
         originalUnitPriceVnd: 120000,
-        returnReason: "Người nhận đi vắng nhiều ngày"
+        returnReason: "Người nhận đi vắng nhiều ngày",
+        imageFile: "ceramic-mug.webp"
       },
       {
         sku: "MOKA-POT-3CUP",
@@ -384,7 +393,8 @@ const products = [
         categoryId: "home",
         quantity: 1,
         originalUnitPriceVnd: 380000,
-        returnReason: "Người nhận đi vắng nhiều ngày"
+        returnReason: "Người nhận đi vắng nhiều ngày",
+        imageFile: "moka-pot.webp"
       }
     ]
   },
@@ -403,7 +413,6 @@ const products = [
     conditionNotes: "Bao bì ngoài nguyên trạng, không rách thủng, còn mã đơn hoàn gốc.",
     priceVnd: 419000,
     weightGram: 860,
-    imageFiles: ["denim-jacket.webp"],
     lines: [
       {
         sku: "JKT-DENIM-WASH-XL",
@@ -414,7 +423,8 @@ const products = [
         categoryId: "fashion",
         quantity: 1,
         originalUnitPriceVnd: 790000,
-        returnReason: "Khách đổi mẫu khác"
+        returnReason: "Khách đổi mẫu khác",
+        imageFile: "denim-jacket.webp"
       }
     ]
   },
@@ -426,47 +436,49 @@ const products = [
     sourceOrderRef: "TTK-2611-0012",
     sourceReturnRef: "RET-2611-0012",
     sealStatus: "INTACT",
-    title: "Kiện hoàn set đồ nữ 3 món: 1 váy lụa satin + 1 áo kiểu + 1 túi vải",
+    title: "Kiện hoàn set đồ nữ 3 món: 1 đầm trắng dáng dài + 1 áo sơ mi linen + 1 túi tote vải",
     description: "Đơn hoàn gồm trọn bộ 3 sản phẩm thời trang nữ mua cùng 1 shop, giao không thành công.",
     categoryId: "fashion",
     conditionGrade: "LIKE_NEW_99",
     conditionNotes: "Kiện hoàn nguyên hộp quà của shop, lớp niêm phong ngoài còn nguyên vẹn.",
     priceVnd: 429000,
     weightGram: 780,
-    imageFiles: ["dress.webp"],
     lines: [
       {
-        sku: "SKIRT-SATIN-CHMP",
-        productName: "Chân váy lụa satin dáng dài xẻ nhẹ",
-        variantName: "Size S · Champagne",
+        sku: "DRESS-SATIN-WHT",
+        productName: "Đầm trắng lụa satin dáng dài thắt eo",
+        variantName: "Size S · Trắng kem",
         brand: "LuneWear",
         sourceCategory: "Váy / Đầm",
         categoryId: "fashion",
         quantity: 1,
         originalUnitPriceVnd: 440000,
-        returnReason: "Hoàn toàn bộ đơn hàng"
+        returnReason: "Hoàn toàn bộ đơn hàng",
+        imageFile: "dress.webp"
       },
       {
-        sku: "TOP-SATIN-DRAPE",
-        productName: "Áo cổ đổ lụa satin đồng bộ",
-        variantName: "Size S · Champagne",
+        sku: "SHIRT-LINEN-CRM",
+        productName: "Áo sơ mi linen trắng kem khoác ngoài",
+        variantName: "Size M · Trắng kem",
         brand: "LuneWear",
-        sourceCategory: "Áo kiểu",
+        sourceCategory: "Áo sơ mi",
         categoryId: "fashion",
         quantity: 1,
         originalUnitPriceVnd: 320000,
-        returnReason: "Hoàn toàn bộ đơn hàng"
+        returnReason: "Hoàn toàn bộ đơn hàng",
+        imageFile: "linen-shirt.webp"
       },
       {
-        sku: "POUCH-SILK-CRM",
-        productName: "Túi rút lụa bảo quản trang phục",
-        variantName: "Kem ngà",
+        sku: "TOTE-CANVAS-NVY",
+        productName: "Túi tote vải canvas phối sọc navy",
+        variantName: "Kem / Navy",
         brand: "LuneWear",
-        sourceCategory: "Phụ kiện",
+        sourceCategory: "Túi xách",
         categoryId: "accessories",
         quantity: 1,
-        originalUnitPriceVnd: 90000,
-        returnReason: "Hoàn toàn bộ đơn hàng"
+        originalUnitPriceVnd: 150000,
+        returnReason: "Hoàn toàn bộ đơn hàng",
+        imageFile: "tote.webp"
       }
     ]
   },
@@ -485,7 +497,6 @@ const products = [
     conditionNotes: "Hộp giày bên ngoài hơi móp ở cạnh nhưng chưa mở kiểm tra đôi giày bên trong.",
     priceVnd: 449000,
     weightGram: 980,
-    imageFiles: ["sneakers.webp"],
     lines: [
       {
         sku: "SNK-RETRO-WHT-41",
@@ -496,7 +507,8 @@ const products = [
         categoryId: "fashion",
         quantity: 1,
         originalUnitPriceVnd: 890000,
-        returnReason: "Khách chọn nhầm size giày"
+        returnReason: "Khách chọn nhầm size giày",
+        imageFile: "sneakers.webp"
       }
     ]
   },
@@ -508,25 +520,25 @@ const products = [
     sourceOrderRef: "SPX-2611-0014",
     sourceReturnRef: "RET-2611-0014",
     sealStatus: "INTACT",
-    title: "Kiện hoàn 2 món công sở: 1 áo blazer be kem + 1 áo sơ mi lụa trắng",
+    title: "Kiện hoàn 2 món công sở: 1 áo blazer xám than + 1 áo sơ mi trắng",
     description: "Đơn hoàn gồm 2 áo công sở cao cấp của cùng 1 người mua từ shop, còn nguyên túi bảo quản.",
     categoryId: "fashion",
     conditionGrade: "LIKE_NEW_99",
     conditionNotes: "Túi bọc vest công sở còn nguyên khóa kéo niêm phong, chưa mở kiểm tra.",
     priceVnd: 469000,
     weightGram: 920,
-    imageFiles: ["blazer-set.webp", "white-shirts-hanger.webp"],
     lines: [
       {
-        sku: "BLAZER-LINEN-BEIGE-M",
+        sku: "BLAZER-TAILOR-GRY-M",
         productName: "Áo khoác blazer hai lớp dáng suông công sở",
-        variantName: "Size M · Be kem",
+        variantName: "Size M · Xám than",
         brand: "Atelier Office",
         sourceCategory: "Áo Blazer",
         categoryId: "fashion",
         quantity: 1,
         originalUnitPriceVnd: 650000,
-        returnReason: "Hoàn đơn không nhận hàng"
+        returnReason: "Hoàn đơn không nhận hàng",
+        imageFile: "blazer-set.webp"
       },
       {
         sku: "SHIRT-OFFICE-WHT-M",
@@ -537,7 +549,8 @@ const products = [
         categoryId: "fashion",
         quantity: 1,
         originalUnitPriceVnd: 320000,
-        returnReason: "Hoàn đơn không nhận hàng"
+        returnReason: "Hoàn đơn không nhận hàng",
+        imageFile: "white-shirts-hanger.webp"
       }
     ]
   },
@@ -556,7 +569,6 @@ const products = [
     conditionNotes: "Vỏ hộp sản phẩm còn nguyên tem niêm phong, lớp màng co hơi trầy nhẹ.",
     priceVnd: 489000,
     weightGram: 680,
-    imageFiles: ["bluetooth-speaker.webp"],
     lines: [
       {
         sku: "JBL-FLIP4-GRY",
@@ -567,7 +579,8 @@ const products = [
         categoryId: "electronics",
         quantity: 1,
         originalUnitPriceVnd: 950000,
-        returnReason: "Khách đổi sang dòng loa công suất lớn hơn"
+        returnReason: "Khách đổi sang dòng loa công suất lớn hơn",
+        imageFile: "bluetooth-speaker.webp"
       }
     ]
   }
@@ -577,9 +590,11 @@ function trackingHash(code) {
   return createHmac("sha256", trackingHmacSecret).update(code.trim().toUpperCase()).digest("hex");
 }
 
-async function uploadImages() {
-  const uniqueFiles = [...new Set(products.flatMap((p) => p.imageFiles))];
+async function syncStorageImages() {
+  const uniqueFiles = [...new Set(products.flatMap((p) => p.lines.map((l) => l.imageFile)))];
   const publicDir = path.resolve("apps/web/public/demo-products");
+
+  await supabase.storage.from("catalog-media").remove(obsoleteFiles);
 
   await Promise.all(
     uniqueFiles.map(async (file) => {
@@ -628,6 +643,7 @@ async function seedProducts() {
     for (let index = 0; index < products.length; index++) {
       const item = products[index];
       const manifestHash = `demo-nb1-pkg-${String(index + 1).padStart(3, "0")}`;
+      const packageImageFiles = [...new Set(item.lines.map((l) => l.imageFile))];
 
       await client.query(
         `INSERT INTO return_packages (
@@ -704,7 +720,7 @@ async function seedProducts() {
             line.sourceCategory,
             line.originalUnitPriceVnd,
             line.returnReason,
-            JSON.stringify(item.imageFiles.map((f) => `/demo-products/${f}`)),
+            JSON.stringify([`demo-products/${line.imageFile}`]),
             line.categoryId
           ]
         );
@@ -716,7 +732,7 @@ async function seedProducts() {
       );
 
       const imagesJson = JSON.stringify(
-        item.imageFiles.map((file) => ({ key: `demo-products/${file}`, width: 1200, height: 900 }))
+        packageImageFiles.map((file) => ({ key: `demo-products/${file}`, width: 1200, height: 900 }))
       );
 
       await client.query(
@@ -770,7 +786,7 @@ async function seedProducts() {
 }
 
 async function main() {
-  const uploadedCount = await uploadImages();
+  const uploadedCount = await syncStorageImages();
   await seedProducts();
   console.log(JSON.stringify({
     shopId: SHOP_ID,

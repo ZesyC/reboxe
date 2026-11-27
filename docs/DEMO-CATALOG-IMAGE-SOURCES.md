@@ -17,21 +17,25 @@ Các ảnh trong `apps/web/public/demo-products/` chỉ dùng cho môi trường
 | `lamp.webp` | [eBay — White LED desk lamps](https://cr.ebay.com/b/White-LED-Desk-Lamps/112581/bn_93675468) |
 | `vacuum.webp` | [Dick Smith — Cordless handheld vacuum](https://www.dicksmith.co.nz/dn/buy/sensual-sale-cordless-handheld-vacuum-portable-small-hand-vacuum-cleaner-for-home-car-black-7261155328132/) |
 | `sneakers.webp` | [Pexels — Close Up Shot of a Brand New Sneaker](https://www.pexels.com/photo/close-up-shot-of-a-brand-new-sneaker-12279148/) |
-| `dress.webp` | [Pexels — Stylish Woman in Satin Outfit Against Minimalist Background](https://www.pexels.com/photo/stylish-woman-in-satin-outfit-against-minimalist-background-29762910/) |
+| `dress.webp` | [Wikimedia Commons — White Dresses on Hangers (Unsplash)](https://commons.wikimedia.org/wiki/File:White_dressers_on_hangers_(Unsplash).jpg) |
 | `phone-case-silicone.webp` | [Wikimedia Commons — Apple iPhone Silicone Case (Black)](https://commons.wikimedia.org/wiki/File:Apple_iPhone_17_Silicone_Case_(Black).jpg) |
-| `phone-case-bundle.webp` | [Pexels — Leather Smartphone Case and Cardholder](https://www.pexels.com/photo/brown-and-black-leather-case-and-card-holder-13706809/) |
+| `phone-case-white.webp` | [Wikimedia Commons — Smartphone Case Cover White](https://commons.wikimedia.org/wiki/File:Smartphone_case_cover_white.jpg) |
+| `leather-cardholder.webp` | [Wikimedia Commons — Leather Bi-Fold Wallet](https://commons.wikimedia.org/wiki/File:Leather_bi-fold_wallet_by_Eugene_Pik_(2021)_04.jpg) |
 | `phone-case-accessory.webp` | [Wikimedia Commons — Smartphone with Case Cover on Table](https://commons.wikimedia.org/wiki/File:Smartphone_with_case_cover_on_table.jpg) |
 | `linen-shirt.webp` | [Pexels — Minimalist Linen Shirt on Wooden Hanger](https://www.pexels.com/photo/a-minimalist-linen-shirt-displayed-on-a-wooden-hanger-against-a-neutral-background-22441297/) |
 | `white-shirts-hanger.webp` | [Pexels — White Shirts on Hangers](https://www.pexels.com/photo/white-shirts-on-hangers-8306385/) |
-| `floral-dress.webp` | [Wikimedia Commons — A Woman in a Red Sundress](https://commons.wikimedia.org/wiki/File:A_Woman_in_a_Red_Sundress.jpg) |
+| `boutique-dress.webp` | [Wikimedia Commons — Boutique Apparel Rack (Unsplash)](https://commons.wikimedia.org/wiki/File:Philadelphia_retail_space_(Unsplash).jpg) |
 | `denim-jeans.webp` | [Pexels — Folded Blue Denim Jeans Stack](https://www.pexels.com/photo/folded-blue-denim-jeans-4109759/) |
 | `beige-handbag.webp` | [Pexels — Beige Bag on White Background](https://www.pexels.com/photo/beige-bag-on-white-background-22434782/) |
 | `bundle-tees-jeans.webp` | [Pexels — Folded White Cotton T-Shirt](https://www.pexels.com/photo/folded-white-t-shirt-5746087/) |
 | `folded-shirts-stack.webp` | [Pexels — Folded Clothes Stack](https://www.pexels.com/photo/folded-clothes-581087/) |
 | `knitwear-bundle.webp` | [Pexels — Folded Knit Sweaters and Scarf](https://www.pexels.com/photo/folded-knit-sweaters-30569741/) |
+| `woven-scarf.webp` | [Wikimedia Commons — Purple Pure Wool Infinity Scarf](https://commons.wikimedia.org/wiki/File:Purple_heather_pure_wool_infinity_scarf.jpg) |
+| `ceramic-mug.webp` | [Wikimedia Commons — Espresso Cup on Counter](https://commons.wikimedia.org/wiki/File:Freshly_brewed_cup_of_espresso_in_sunlight_on_kitchen_counter.jpg) |
+| `moka-pot.webp` | [Wikimedia Commons — Moka Express Sideview](https://commons.wikimedia.org/wiki/File:Moka_Express_sideview.png) |
 | `ceramic-mug-set.webp` | [Wikimedia Commons — White Ceramic Mug and Coffee Pot](https://commons.wikimedia.org/wiki/File:White_Ceramic_Mug_Filled_With_Coffee_Beside_Coffee_Beans_(43087322071).jpg) |
 | `denim-jacket.webp` | [Wikimedia Commons — Jean Jacket](https://commons.wikimedia.org/wiki/File:Jean_jacket.jpg) |
-| `blazer-set.webp` | [Pexels — Tailored Blazers](https://www.pexels.com/photo/a-blazer-and-a-purse-hanging-7959681/) |
+| `blazer-set.webp` | [Wikimedia Commons — Blazer Jackets on Rack (Unsplash)](https://commons.wikimedia.org/wiki/File:Blazer_Jackets_on_Rack_(Unsplash).jpg) |
 | `bluetooth-speaker.webp` | [Wikimedia Commons — JBL Flip 4 Portable Bluetooth Speaker](https://commons.wikimedia.org/wiki/File:JBL_Flip_4.jpg) |
 
 Trước khi dùng ngoài phạm vi demo nội bộ, cần thay bốn ảnh từ nguồn thương mại (`fan`, `hairdryer`, `lamp`, `vacuum`) bằng tài sản có giấy phép sử dụng thương mại rõ ràng.

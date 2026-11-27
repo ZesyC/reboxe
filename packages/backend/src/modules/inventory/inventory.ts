@@ -56,7 +56,7 @@ type ListingRow = {
   seal_status: "INTACT" | "DAMAGED" | "UNKNOWN" | null;
   manifest_lines: Array<{
     productName: string; variantName: string | null; brand: string | null; quantity: number;
-    categoryId: string; originalUnitPriceVnd: number | null;
+    categoryId: string; originalUnitPriceVnd: number | null; imageUrls?: string[];
   }> | null;
 };
 
@@ -154,7 +154,8 @@ const listingSelect = `
     SELECT jsonb_agg(jsonb_build_object(
       'productName', rl.product_name, 'variantName', rl.variant_name, 'brand', rl.brand,
       'quantity', rl.source_quantity, 'categoryId', rl.reboxe_category_id,
-      'originalUnitPriceVnd', rl.original_unit_price_vnd
+      'originalUnitPriceVnd', rl.original_unit_price_vnd,
+      'imageUrls', rl.product_image_urls
     ) ORDER BY rl.source_item_ref, rl.id) AS lines
     FROM return_lines rl WHERE rl.return_package_id = p.id
   ) manifest ON true`;
@@ -189,7 +190,14 @@ function presentPublicListing(row: ListingRow, storage: CatalogMediaStorage): Pu
       manifestSummary: { lineCount: row.manifest_lines.length, unitCount },
       lines: row.manifest_lines.map((line) => ({
         ...line,
-        originalUnitPriceVnd: line.originalUnitPriceVnd === null ? null : Number(line.originalUnitPriceVnd)
+        originalUnitPriceVnd: line.originalUnitPriceVnd === null ? null : Number(line.originalUnitPriceVnd),
+        imageUrls: Array.isArray(line.imageUrls)
+          ? line.imageUrls.map((url) =>
+              url.startsWith("http://") || url.startsWith("https://")
+                ? url
+                : storage.publicUrl(url.replace(/^\/+/, ""))
+            )
+          : []
       }))
     };
   }

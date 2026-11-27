@@ -119,7 +119,8 @@ export const publicListingSchema = listingSchema.omit({ status: true, weightGram
       brand: z.string().nullable(),
       quantity: z.number().int().positive(),
       categoryId: z.string(),
-      originalUnitPriceVnd: z.number().int().positive().nullable()
+      originalUnitPriceVnd: z.number().int().positive().nullable(),
+      imageUrls: z.array(z.string()).optional()
     }))
   }).optional()
 });

@@ -1680,6 +1680,7 @@ export interface components {
                     quantity?: number;
                     categoryId?: string;
                     originalUnitPriceVnd?: number | null;
+                    imageUrls?: string[];
                 }[];
             };
         };
