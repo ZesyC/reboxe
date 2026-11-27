@@ -18,7 +18,17 @@ jobs:
         run: corepack pnpm install --frozen-lockfile
       - name: Start local Supabase
         run: |
-          corepack pnpm supabase start
+          sudo sysctl -w net.ipv4.ip_local_reserved_ports=54321-54329
+          for attempt in 1 2 3; do
+            if corepack pnpm supabase start; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            corepack pnpm supabase stop --no-backup || true
+            sleep 5
+          done
           eval "$(corepack pnpm supabase status -o env)"
           {
             echo "SUPABASE_SECRET_KEY=$SECRET_KEY"
