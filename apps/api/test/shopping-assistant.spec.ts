@@ -65,6 +65,41 @@ describe("shopping assistant", () => {
     const sent = fetch.mock.calls.map(([, request]) => JSON.parse(JSON.parse(String(request?.body)).messages[0].content));
     expect(sent[0].messages).toEqual(["Tôi muốn mua quạt để bàn", "Dưới 300k và số của tôi là [số điện thoại]"]);
     expect(sent[1].candidates.map(({ id }: { id: string }) => id)).toEqual([first.id, second.id, reserved.id, publicListing.id]);
+    expect(sent[1].candidates[0]).toMatchObject({ categoryId: "household", conditionGrade: "GOOD" });
+  });
+
+  it("normalizes omitted/zero plan fields, caps extra queries/ids, and fills candidate pool to 48", async () => {
+    const emptyPage: PublicListingPage = { items: [], sponsored: [], nextCursor: null };
+    const manyItems = Array.from({ length: 50 }, (_, index) => listing(`fan-${index + 1}`, 150_000, 1));
+    const inventory = {
+      listCategories: vi.fn().mockResolvedValue([{ id: "household", name: "Đồ gia dụng" }]),
+      listPublicListings: vi.fn<InventoryModule["listPublicListings"]>()
+        .mockResolvedValueOnce(emptyPage)
+        .mockResolvedValueOnce(emptyPage)
+        .mockResolvedValueOnce(emptyPage)
+        .mockResolvedValueOnce({ items: manyItems, sponsored: [], nextCursor: null })
+    };
+    const fetch = provider(
+      { queries: ["quạt A", "quạt B", "quạt C", "quạt D"], categoryId: "Đồ gia dụng", maxPriceVnd: 0 },
+      { listingIds: ["fan-1", "fan-2", "fan-2", "fan-3", "fan-4"] }
+    );
+
+    await expect(suggestShoppingListings({ messages: ["Tìm quạt"] }, inventory)).resolves.toEqual({
+      listings: [manyItems[0], manyItems[1], manyItems[2]],
+      needsProductDetails: false
+    });
+    expect(inventory.listPublicListings).toHaveBeenCalledTimes(4);
+    expect(inventory.listPublicListings.mock.calls[3]).toEqual([{ category: "household", sort: "newest" }, { maxPriceVnd: undefined }]);
+    const sent = fetch.mock.calls.map(([, request]) => JSON.parse(JSON.parse(String(request?.body)).messages[0].content));
+    expect(sent[1].candidates).toHaveLength(48);
+  });
+
+  it("treats null queries as needing product details", async () => {
+    const inventory = catalog();
+    provider({ queries: null });
+    await expect(suggestShoppingListings({ messages: ["Có gì hay không"] }, inventory))
+      .resolves.toEqual({ listings: [], needsProductDetails: true });
+    expect(inventory.listPublicListings).not.toHaveBeenCalled();
   });
 
   it("asks for product details when the request is unclear", async () => {

@@ -43,8 +43,21 @@ export function ShoppingCheckout({ listing, onBack }: { listing: PublicListing; 
 
   useEffect(() => {
     let active = true;
-    void api.listAccountAddresses().then(() => {
-      if (active) setReady(true);
+    void api.listAccountAddresses().then((addresses) => {
+      if (!active) return;
+      const saved = addresses.find((address) => address.isDefault) ?? addresses[0];
+      if (saved) {
+        setDetails({
+          recipientName: saved.recipientName,
+          phone: saved.phone,
+          addressLine: saved.addressLine,
+          ward: saved.ward,
+          district: saved.district,
+          province: saved.province
+        });
+        setStep(fields.length);
+      }
+      setReady(true);
     }).catch((error) => {
       if (!active) return;
       if (error instanceof ApiClientError && error.status === 401) setSignIn(true);

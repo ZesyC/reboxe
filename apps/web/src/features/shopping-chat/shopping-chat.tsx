@@ -31,6 +31,7 @@ export function ShoppingChat({ open, initialListing, unavailable }: {
 }) {
   const [selected, setSelected] = useState(initialListing);
   const [messages, setMessages] = useState<string[]>([]);
+  const [pendingMessage, setPendingMessage] = useState<string>();
   const [input, setInput] = useState("");
   const [suggestions, setSuggestions] = useState<ShoppingSuggestions>();
   const [error, setError] = useState(unavailable ? "Kiện bạn chọn hiện không còn bán. Bạn có thể tìm món khác bên dưới." : "");
@@ -129,23 +130,27 @@ export function ShoppingChat({ open, initialListing, unavailable }: {
     const message = input.trim();
     if (!message || searching.current || speech.current) return;
     searching.current = true;
+    setPendingMessage(message);
+    setInput("");
     setBusy(true);
     setError("");
     const next = [...messages, message].slice(-8);
     try {
       setSuggestions(await api.suggestShoppingListings({ messages: next }));
       setMessages(next);
-      setInput("");
     } catch (error) {
+      setInput((current) => current || message);
       setError(error instanceof ApiClientError && error.status === 429
         ? "Bạn đã gửi nhiều tin nhắn. Vui lòng chờ một chút rồi gửi lại."
         : "Trợ lý đang gặp lỗi khi tìm hàng. Vui lòng bấm Gửi để thử lại.");
     } finally {
+      setPendingMessage(undefined);
       setBusy(false);
       searching.current = false;
     }
   }
 
+  const displayedMessage = pendingMessage ?? messages.at(-1);
   const reply = !suggestions ? "Chào bạn! Bạn đang muốn mua món gì?"
     : suggestions.needsProductDetails ? "Bạn muốn tìm món gì? Bạn có thể nói thêm tên món, công dụng hoặc khoảng giá."
     : suggestions.listings.length === 0 ? "Mình chưa tìm được sản phẩm phù hợp. Bạn có thể thử tên gọi khác hoặc đổi khoảng giá."
@@ -166,7 +171,7 @@ export function ShoppingChat({ open, initialListing, unavailable }: {
         ) : (
           <div className="grid gap-4">
             <div aria-live="polite" className="grid gap-3">
-              {messages.at(-1) && <p className="max-w-[90%] justify-self-end break-words rounded-xl rounded-br-sm bg-[var(--ink)] px-4 py-3 text-xl text-white"><span className="sr-only">Bạn: </span>{messages.at(-1)}</p>}
+              {displayedMessage && <p className="max-w-[90%] justify-self-end break-words rounded-xl rounded-br-sm bg-[var(--ink)] px-4 py-3 text-xl text-white"><span className="sr-only">Bạn: </span>{displayedMessage}</p>}
               <p className="max-w-[90%] justify-self-start rounded-xl rounded-bl-sm border border-[var(--line)] bg-white px-4 py-3 text-xl leading-relaxed"><span className="sr-only">Trợ lý: </span>{busy ? "Mình đang tìm hàng phù hợp…" : reply}</p>
             </div>
             {suggestions && suggestions.listings.length > 0 && !busy && (
@@ -189,6 +194,7 @@ export function ShoppingChat({ open, initialListing, unavailable }: {
             {messages.length > 0 && !busy && (
               <button className="min-h-11 justify-self-start text-left font-medium text-[var(--accent-strong)] underline underline-offset-2 disabled:opacity-50" disabled={!!voiceState} onClick={() => {
                 setMessages([]);
+                setPendingMessage(undefined);
                 setSuggestions(undefined);
                 setInput("");
                 setError("");

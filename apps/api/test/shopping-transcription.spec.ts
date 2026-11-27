@@ -8,6 +8,7 @@ import { HttpExceptionFilter } from "../src/http/filters/http-exception.filter";
 
 const realFetch = globalThis.fetch;
 const webm = new Uint8Array([0x1a, 0x45, 0xdf, 0xa3, 0]);
+const m4a = new Uint8Array([0, 0, 0, 24, 0x66, 0x74, 0x79, 0x70, 0x4d, 0x34, 0x41, 0x20]);
 let app: INestApplication;
 let url: string;
 const groq = vi.fn<typeof fetch>();
@@ -53,9 +54,20 @@ it("uploads a Vietnamese recording to Groq and returns the transcript", async ()
   const form = request?.body as FormData;
   expect(form.get("model")).toBe("whisper-large-v3-turbo");
   expect(form.get("language")).toBe("vi");
+  expect(form.get("temperature")).toBe("0");
+  expect(String(form.get("prompt") ?? "").length).toBeGreaterThan(0);
   const audio = form.get("file") as File;
   expect(audio.name).toBe("recording.webm");
   expect(new Uint8Array(await audio.arrayBuffer())).toEqual(webm);
+});
+
+it("accepts audio/x-m4a recordings with an ftyp header as recording.mp4", async () => {
+  groq.mockResolvedValueOnce(Response.json({ text: "Ốp lưng iPhone" }));
+  const response = await upload(m4a, "audio/x-m4a");
+  expect(response.status).toBe(201);
+  expect(await response.json()).toEqual({ text: "Ốp lưng iPhone" });
+  const form = groq.mock.calls[0]?.[1]?.body as FormData;
+  expect((form.get("file") as File).name).toBe("recording.mp4");
 });
 
 it("rejects invalid and oversized recordings before forwarding them", async () => {

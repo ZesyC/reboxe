@@ -47,7 +47,62 @@ describe("quick listing assistant", () => {
     expect(request?.redirect).toBe("error");
     const body = JSON.parse(String(request?.body));
     expect(body.model).toBe("test-model");
+    expect(body.temperature).toBe(0);
+    expect(body.max_tokens).toBe(2048);
     expect(JSON.parse(body.messages[0].content)).toEqual({ ...conversation, categories });
+  });
+
+  it("parses prose-wrapped fenced JSON and normalizes /v1 base URLs", async () => {
+    vi.stubEnv("ANTHROPIC_BASE_URL", "https://ai.example.test/v1/");
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValueOnce(Response.json({
+      content: [{ type: "text", text: `Kết quả:\n\`\`\`json\n${JSON.stringify(draft)}\n\`\`\`` }],
+      stop_reason: "end_turn"
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(suggestQuickListing({ turns }, categories)).resolves.toEqual({
+      draft,
+      question: "Kiện này nặng khoảng bao nhiêu gam?"
+    });
+    expect(String(fetchMock.mock.calls[0]?.[0])).toBe("https://ai.example.test/v1/messages");
+  });
+
+  it("sanitizes null/zero/short fields and maps Vietnamese category names without 503", async () => {
+    mockMessage({
+      title: "ab",
+      description: "",
+      categoryId: "thời trang",
+      conditionGrade: "fair",
+      conditionNotes: "Đã mặc vài lần, hơi sờn",
+      price: 140000.4,
+      weightGram: 0
+    });
+
+    await expect(suggestQuickListing({ turns }, categories)).resolves.toEqual({
+      draft: {
+        categoryId: "fashion",
+        conditionGrade: "FAIR",
+        conditionNotes: "Đã mặc vài lần, hơi sờn",
+        price: 140000
+      },
+      question: "Bạn muốn đăng bán món gì?"
+    });
+  });
+
+  it("omits reasoning_effort when GROQ_MODEL is a non-reasoning model", async () => {
+    vi.stubEnv("ANTHROPIC_API_KEY", "");
+    vi.stubEnv("GROQ_API_KEY", "groq-test-key");
+    vi.stubEnv("GROQ_MODEL", "llama-3.3-70b-versatile");
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValueOnce(Response.json({
+      choices: [{ finish_reason: "stop", message: { content: JSON.stringify(draft) } }]
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(suggestQuickListing({ turns }, categories)).resolves.toMatchObject({ draft });
+    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    expect(body.model).toBe("llama-3.3-70b-versatile");
+    expect(body.temperature).toBe(0);
+    expect("reasoning_effort" in body).toBe(false);
   });
 
   it("keeps the product when Groq only returns the newly stated price", async () => {
@@ -139,7 +194,12 @@ describe("quick listing assistant", () => {
     expect(new Headers(request?.headers).has("x-api-key")).toBe(false);
     expect(request?.redirect).toBe("error");
     const body = JSON.parse(String(request?.body));
-    expect(body).toMatchObject({ model: "openai/gpt-oss-120b", response_format: { type: "json_object" } });
+    expect(body).toMatchObject({
+      model: "openai/gpt-oss-120b",
+      temperature: 0,
+      reasoning_effort: "low",
+      response_format: { type: "json_object" }
+    });
     expect(body.messages.map(({ role }: { role: string }) => role)).toEqual(["system", "user"]);
     expect(JSON.parse(body.messages[1].content)).toEqual({ turns, categories });
   });
