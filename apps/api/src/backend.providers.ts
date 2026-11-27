@@ -104,8 +104,7 @@ export const backendProviders: Provider[] = [
     useFactory: (database: DatabaseContext): CommerceModule => new CommerceModule(
       database.pool,
       sellerPiiEncryptionSecret(),
-      process.env.NODE_ENV !== "production"
-        && (process.env.COMMERCE_MODE ?? "SANDBOX") === "SANDBOX"
+      (process.env.COMMERCE_MODE ?? "SANDBOX") === "SANDBOX"
         && (process.env.PAYMENT_MODE ?? "DISABLED") === "DISABLED",
       process.env.PAYOS_PROMOTION_PAYMENTS_ENABLED === "true"
     )

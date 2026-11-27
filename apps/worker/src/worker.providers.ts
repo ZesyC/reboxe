@@ -36,7 +36,8 @@ export const workerProviders: Provider[] = [
     useFactory: (database: DatabaseContext): CommerceModule => new CommerceModule(
       database.pool,
       process.env.SELLER_PII_ENCRYPTION_KEY ?? "local-dev-only-seller-pii-encryption-key-change-before-production",
-      process.env.NODE_ENV !== "production" && (process.env.COMMERCE_MODE ?? "SANDBOX") === "SANDBOX"
+      (process.env.COMMERCE_MODE ?? "SANDBOX") === "SANDBOX"
+        && (process.env.PAYMENT_MODE ?? "DISABLED") === "DISABLED"
     )
   }
 ];

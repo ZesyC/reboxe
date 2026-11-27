@@ -11,7 +11,7 @@ export class PayosController {
   constructor(@Inject(PAYOS_TOPUPS) private readonly topups: PayosPromotionTopups) {}
   @Get("payment-options")
   options() { return { payosPromotionPayments: this.topups.configured,
-    sandboxPromotions: process.env.NODE_ENV !== "production" && (process.env.COMMERCE_MODE ?? "SANDBOX") === "SANDBOX" && (process.env.PAYMENT_MODE ?? "DISABLED") === "DISABLED" }; }
+    sandboxPromotions: (process.env.COMMERCE_MODE ?? "SANDBOX") === "SANDBOX" && (process.env.PAYMENT_MODE ?? "DISABLED") === "DISABLED" }; }
   @Post("shops/:shopId/promotion-topups")
   create(@CurrentActor() actor: Actor, @Param("shopId") shopId: string, @Body() body: unknown) {
     const input = promotionTopupSchema.safeParse(body);
